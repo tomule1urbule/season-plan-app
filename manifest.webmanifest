@@ -1,8 +1,9 @@
 {
   "name": "Season 26/27 — Training Plan",
   "short_name": "Season 26/27",
-  "description": "Tomas's Garmin-driven training plan: Mažeikiai 10K, Kaunas & Riga halves, Trakai tri, Tallinn marathon.",
-  "start_url": "./?source=pwa",
+  "description": "Garmin-driven training plan: Mažeikiai 10K, Kaunas & Riga halves, Trakai tri, Tallinn marathon.",
+  "id": "./",
+  "start_url": "./#week",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
