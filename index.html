@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Season 26/27 — Training Plan</title>
+<meta name="theme-color" content="#0e1014">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root{--bg:#0e1014;--card:#171a21;--line:#2a2f3a;--text:#eceef2;--muted:#8d95a3;--accent:#c6f432}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(120% 70% at 50% 0%,#3a2a5c 0%,#0e1014 60%);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px calc(20px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))}
+  main{max-width:420px;width:100%;text-align:center}
+  img.logo{width:132px;height:132px;border-radius:30px;box-shadow:0 12px 40px rgba(198,244,50,.18)}
+  h1{font-size:28px;margin:18px 0 4px;letter-spacing:-.01em}
+  .quote{color:var(--accent);font-weight:600;margin:6px 0 22px}
+  .races{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0 0 24px}
+  .races div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 2px;font-size:11px;color:var(--muted)}
+  .races b{display:block;color:var(--text);font-size:12.5px}
+  a.btn,button.btn{display:block;width:100%;padding:15px;border-radius:14px;border:0;font:inherit;font-weight:700;text-decoration:none;margin-bottom:10px;cursor:pointer}
+  .p{background:var(--accent);color:#111}
+  .s{background:var(--card);color:var(--text);border:1px solid var(--line)!important}
+  .hint{color:var(--muted);font-size:13px;margin-top:14px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="icons/icon-512.png" alt="Season 26/27 icon: road to the summit">
+  <h1>Season 26/27</h1>
+  <div class="quote" id="quote">Every summit starts with the first step.</div>
+  <div class="races">
+    <div><b>16 Feb</b>10K</div><div><b>25 Apr</b>½ Kaunas</div><div><b>16 May</b>½ Riga</div><div><b>27 Jun</b>Tri</div><div><b>12 Sep</b>Tallinn</div>
+  </div>
+  <a class="btn p" id="open" href="https://claude.ai/artifact/Cne1y5nXkyUkRXdXt1fJ24">Open my plan</a>
+  <button class="btn s hide" id="install">Install on this phone</button>
+  <div class="hint" id="hint">On Android: Chrome menu ⋮ → <b>Install app</b> (or "Add to home screen").</div>
+</main>
+<script>
+const PLAN='https://claude.ai/artifact/Cne1y5nXkyUkRXdXt1fJ24';
+const Q=['Every summit starts with the first step.','Consistency beats intensity.','Easy days easy, hard days hard.','Sub-45. Sub-1:35. One session at a time.','Discipline is choosing what you want most.','The finish line is earned in the winter.'];
+document.getElementById('quote').textContent=Q[new Date().getDate()%Q.length];
+const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+if(standalone){document.getElementById('hint').textContent='Opening your plan…';setTimeout(()=>location.replace(PLAN),600)}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;document.getElementById('install').classList.remove('hide')});
+document.getElementById('install').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;document.getElementById('install').classList.add('hide')};
+addEventListener('appinstalled',()=>{document.getElementById('hint').textContent='Installed — find "Season 26/27" on your home screen.'});
+</script>
+</body>
+</html>

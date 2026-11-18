@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1b2e"/><stop offset="0.55" stop-color="#3a2a5c"/><stop offset="1" stop-color="#d95926"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f4ff8a"/><stop offset="0.6" stop-color="#c6f432"/><stop offset="1" stop-color="#c6f432" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6f432"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="256" cy="250" r="150" fill="url(#sun)" opacity="0.55"/>
+  <circle cx="256" cy="250" r="78" fill="#c6f432"/>
+  <!-- mountains -->
+  <path d="M0 330 L120 230 L190 290 L290 170 L390 280 L440 240 L512 300 L512 512 L0 512 Z" fill="#141a26"/>
+  <path d="M290 170 L330 215 L312 210 L300 228 L284 205 L266 214 Z" fill="#e8ecf2" opacity="0.9"/>
+  <!-- summit flag -->
+  <line x1="290" y1="172" x2="290" y2="112" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M293 114 L338 128 L293 144 Z" fill="#d55181"/>
+  <!-- winding road to the peak -->
+  <path d="M150 512 C 180 440, 330 430, 300 370 S 230 300, 285 250" fill="none" stroke="url(#road)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M150 512 C 180 440, 330 430, 300 370 S 230 300, 285 250" fill="none" stroke="#141a26" stroke-width="4" stroke-dasharray="14 16" stroke-linecap="round"/>
+</svg>
