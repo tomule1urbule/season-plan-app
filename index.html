@@ -8,7 +8,7 @@
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Season 26/27 — Training Plan</title>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0e1014;--card:#171a21;--card2:#1e222b;--line:#2a2f3a;--grid:#242934;--text:#eceef2;--sub:#b9bfca;--muted:#8d95a3;
@@ -18,10 +18,10 @@
   --good:#22c55e;--warn:#eab308;--crit:#ef4444;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-h1,h2,h3{font-family:Archivo,Inter,sans-serif;margin:0;letter-spacing:-.01em}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Figtree,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,sans-serif;margin:0;letter-spacing:-.01em}
 h2.sec{font-size:17px;margin:20px 2px 10px}
-.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.mono{font-family:Figtree,system-ui,sans-serif;font-variant-numeric:tabular-nums}
 button{font:inherit;color:inherit;cursor:pointer}
 a{color:var(--accent)}
 .wrap{max-width:760px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 14px 100px}
@@ -38,19 +38,19 @@ header.top h1{font-size:24px;font-weight:800}
 .row{display:flex;align-items:center;gap:8px}.between{justify-content:space-between}.wrapf{flex-wrap:wrap}
 .wknav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .wknav button{background:var(--card2);border:1px solid var(--line);border-radius:10px;width:40px;height:40px;font-size:18px}
-.wknav .t{flex:1;text-align:center}.wknav .t .d{font-family:Archivo;font-weight:700;font-size:17px}
+.wknav .t{flex:1;text-align:center}.wknav .t .d{font-family:"Bricolage Grotesque";font-weight:700;font-size:17px}
 .phase{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:6px;background:#263010;color:var(--accent)}
 .totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
-.tot{background:var(--card2);border-radius:10px;padding:8px}.tot .v{font-family:"JetBrains Mono";font-size:15px}.tot .l{font-size:11px;color:var(--muted)}
+.tot{background:var(--card2);border-radius:10px;padding:8px}.tot .v{font-family:Figtree;font-variant-numeric:tabular-nums;font-size:15px}.tot .l{font-size:11px;color:var(--muted)}
 .day{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .day:first-child{border-top:0}
-.day .dn{text-align:center}.day .dn .w{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.day .dn .n{font-family:Archivo;font-weight:800;font-size:20px}
+.day .dn{text-align:center}.day .dn .w{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.day .dn .n{font-family:"Bricolage Grotesque";font-weight:800;font-size:20px}
 .day.today .dn .n{color:var(--accent)}.day.past{opacity:.75}
 .wo{display:block;width:100%;text-align:left;background:var(--card2);border:0;border-radius:12px;padding:10px 12px;margin-bottom:6px;border-left:4px solid var(--c,#555)}
 .wo:last-child{margin-bottom:0}
 .wo .h{display:flex;align-items:center;gap:7px}
 .wo .ttl{font-weight:600}
-.wo .meta{margin-left:auto;font-family:"JetBrains Mono";font-size:12.5px;color:var(--muted);white-space:nowrap}
+.wo .meta{margin-left:auto;font-family:Figtree;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .wo .one{font-size:13px;color:var(--sub);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .wo .more{font-size:11.5px;color:var(--accent);margin-top:4px}
 .tag{font-size:10px;font-weight:700;border-radius:4px;padding:1px 5px}
@@ -74,9 +74,9 @@ nav.tabs button svg{display:block;margin:0 auto 3px;width:22px;height:22px}
 .prog{height:6px;border-radius:3px;background:var(--grid);overflow:hidden;margin-top:8px}.prog>i{display:block;height:100%;background:var(--accent);border-radius:3px}
 .race{display:grid;grid-template-columns:62px 1fr;gap:12px;align-items:start}
 .race .cd{background:var(--card2);border-radius:12px;text-align:center;padding:8px 4px}
-.race .cd .n{font-family:Archivo;font-weight:800;font-size:22px;color:var(--accent)}.race .cd .l{font-size:10px;color:var(--muted)}
+.race .cd .n{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;color:var(--accent)}.race .cd .l{font-size:10px;color:var(--muted)}
 .race h3{font-size:16px}
-.goal{font-family:"JetBrains Mono";font-size:14px;color:var(--accent)}
+.goal{font-family:Figtree;font-variant-numeric:tabular-nums;font-size:14px;color:var(--accent)}
 .gauge{position:relative;height:8px;border-radius:4px;background:var(--grid);margin:10px 0 4px}
 .gauge .f{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
 .gauge .mk{position:absolute;top:-4px;width:2px;height:16px;background:var(--text)}
@@ -88,11 +88,11 @@ nav.tabs button svg{display:block;margin:0 auto 3px;width:22px;height:22px}
 .tiles.t4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:480px){.tiles.t4{grid-template-columns:repeat(2,1fr)}}
 .tile{background:var(--card2);border-radius:12px;padding:10px}
-.tile .v{font-family:"JetBrains Mono";font-size:19px}.tile .l{font-size:11px;color:var(--muted)}.tile .s{font-size:11px;color:var(--sub);margin-top:2px}
+.tile .v{font-family:Figtree;font-variant-numeric:tabular-nums;font-size:19px}.tile .l{font-size:11px;color:var(--muted)}.tile .s{font-size:11px;color:var(--sub);margin-top:2px}
 table.t{width:100%;border-collapse:collapse;font-size:13px}
 table.t th{color:var(--muted);font-weight:500;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
-table.t td{text-align:right;padding:7px 4px;border-bottom:1px solid var(--grid);font-family:"JetBrains Mono";font-size:12.5px}
-table.t th:first-child,table.t td:first-child{text-align:left;font-family:Inter}
+table.t td{text-align:right;padding:7px 4px;border-bottom:1px solid var(--grid);font-family:Figtree;font-variant-numeric:tabular-nums;font-size:12.5px}
+table.t th:first-child,table.t td:first-child{text-align:left;font-family:Figtree}
 .heat{display:grid;grid-template-columns:28px;grid-template-rows:14px repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;font-size:9.5px}
 .heat .c{border-radius:3px;background:var(--grid)}
 .heat .wl{color:var(--muted);white-space:nowrap;overflow:visible}
@@ -131,6 +131,64 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
 .seg{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:3px}
 .seg button{background:none;border:0;padding:5px 10px;border-radius:7px;font-size:12.5px;color:var(--muted)}
 .seg button.on{background:var(--line);color:var(--text)}
+
+/* ===== Dusk summit theme ===== */
+:root{--bg:#14122b;--card:rgba(255,255,255,.045);--card2:rgba(255,255,255,.065);--line:rgba(255,255,255,.085);--grid:rgba(255,255,255,.07);
+  --text:#f2f0fa;--sub:#c6c2dc;--muted:#908bad;--accent:#c6f432;--flag:#e0558f;--amber:#f2a65a;--r-hero:28px;--r-card:20px;--r-row:14px}
+html,body{background:var(--bg)}
+body{background:radial-gradient(130% 55% at 50% -8%,#3a2a63 0%,#231c46 38%,#14122b 72%) fixed}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:16px}
+header.top h1{font-size:30px;font-weight:800;letter-spacing:-.02em}
+header.top .sub{color:var(--muted);font-size:13.5px}
+.chip{background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.chip b{color:var(--accent);font-family:"Bricolage Grotesque";font-weight:800}
+.phase{text-transform:none;letter-spacing:0;font-size:12.5px;padding:4px 10px;border-radius:999px}
+.wo{background:rgba(255,255,255,.055);border-radius:var(--r-row);border-left:0;padding:12px 14px 12px 12px;display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.wo .ic{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c)}
+.wo .ic svg{width:19px;height:19px}
+.wo .ttl{font-weight:650;font-size:15px}
+.wo .more{display:none}
+.day{grid-template-columns:48px 1fr;border-top:1px solid var(--line)}
+.day .dn .w{text-transform:none;letter-spacing:0;font-size:12px}
+.day .dn .n{font-size:22px}
+.day.today .dn .n{color:var(--accent)}
+.restday{font-style:italic}
+.tot{background:rgba(255,255,255,.05);border-radius:var(--r-row)}
+.tot .v{font-family:"Bricolage Grotesque";font-weight:700;font-size:19px}
+nav.tabs{background:rgba(20,18,43,.86);border-top:1px solid var(--line)}
+nav.tabs button.on{color:var(--text)}
+nav.tabs button.on svg{color:var(--accent)}
+nav.tabs button.on::after{content:"";position:absolute;left:50%;bottom:1px;width:18px;height:3px;border-radius:2px;background:var(--accent);transform:translateX(-50%)}
+.btn.p{background:var(--accent);color:#16142c;border-radius:12px}
+.sheet{background:#1b1838;border-top:1px solid var(--line)}
+.box{background:rgba(255,255,255,.05);border-radius:var(--r-row)}
+.box .bt{text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--amber);font-weight:700}
+.step{border-top:1px solid var(--line)}
+.tile{background:rgba(255,255,255,.05);border-radius:var(--r-row)}
+.tile .v{font-family:"Bricolage Grotesque";font-weight:700}
+.status{text-transform:none;letter-spacing:0;font-size:12px;border-radius:999px;padding:3px 9px}
+h2.sec{font-size:19px;font-weight:800}
+/* hero */
+.hero{position:relative;overflow:hidden;border-radius:var(--r-hero);padding:20px 20px 0;margin-bottom:14px;
+  background:linear-gradient(165deg,#47337a 0%,#2c2257 48%,#1d1940 100%);border:1px solid rgba(255,255,255,.1)}
+.hero .when{color:#d8d1f3;font-size:14px}
+.hero h2{font-size:31px;line-height:1.08;font-weight:800;letter-spacing:-.02em;margin:6px 0 8px;max-width:16ch}
+.hero .meta{display:flex;gap:14px;flex-wrap:wrap;color:#e9e4fb;font-size:14px}
+.hero .meta b{font-family:"Bricolage Grotesque";font-size:18px}
+.hero .lead{color:#d8d1f3;font-size:14.5px;margin-top:10px;max-width:42ch}
+.hero .go{margin-top:14px;display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#16142c;border:0;border-radius:999px;padding:10px 16px;font-weight:700}
+.hero .ridge{display:block;width:calc(100% + 40px);margin:16px -20px 0;height:auto}
+.hero .sun{position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,#e6ff7a 0%,#c6f432 35%,rgba(198,244,50,0) 70%);opacity:.55;pointer-events:none}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+.strip button{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;padding:8px 0 9px;color:var(--text);text-align:center}
+.strip button.on{border-color:var(--accent);background:rgba(198,244,50,.09)}
+.strip .w{font-size:11.5px;color:var(--muted)}
+.strip .n{font-family:"Bricolage Grotesque";font-weight:800;font-size:18px;line-height:1.2}
+.strip .dots{display:flex;gap:3px;justify-content:center;height:7px;margin-top:3px}
+.strip .dots i{width:7px;height:7px;border-radius:50%}
+.strip .past{opacity:.6}
+@media (prefers-reduced-motion:no-preference){.hero{animation:rise .5s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(8px)}}}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -288,15 +346,53 @@ function render(){
 function go(t){S.tab=t;try{history.replaceState(null,'','#'+t)}catch(e){try{location.hash=t}catch(_){}}render();window.scrollTo(0,0)}
 
 // ================================================================== WEEK
+const ICON={
+ run:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="4.5" r="2"/><path d="M8 21l3.5-6 3 2.5V22M6 11l3-3.5 4 1.5 2.5 4 3 1"/></svg>',
+ swim:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="17" cy="6" r="2"/><path d="M2 18c2 0 2-1.5 4-1.5s2 1.5 4 1.5 2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M5 13l5-4 4 3"/></svg>',
+ bike:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16.5" r="3.5"/><circle cx="18.5" cy="16.5" r="3.5"/><path d="M5.5 16.5L9 9h6l3.5 7.5M9 9l3 7.5h-6.5M14 5h2.5"/></svg>',
+ strength:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
+ brick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><path d="M6 17l3-6h4M14 5l3 3-3 3M17 8H10"/><circle cx="18" cy="18" r="1.5"/></svg>',
+ race:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>'};
+function ridgeSvg(w,doneDays){
+  const L=7,W=360,H=86;const ws=[];for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);ws.push(xs.reduce((s,x)=>s+(x.key?2:1)+(x.sport==='race'?3:0),0))}
+  let acc=0;const ys=ws.map(v=>{acc+=v+.6;return acc});const mx=ys[6]||1;
+  const pts=ys.map((v,i)=>[18+i*(W-36)/6,H-12-(v/mx)*(H-34)]);
+  const path='M0,'+H+' L0,'+(H-6)+' '+pts.map(p=>'L'+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+' L'+W+','+(pts[6][1]-4).toFixed(1)+' L'+W+','+H+' Z';
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const ti=w.weekStart===mondayOf(today)?(parse(today).getDay()+6)%7:-1;
+  const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="${i===ti?5.5:3.5}" fill="${doneDays[i]?'#c6f432':i===ti?'#fff':'#5c5487'}" stroke="#1d1940" stroke-width="2"/>`).join('');
+  const f=pts[6];
+  return `<svg class="ridge" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${path}" fill="#151230"/><path d="${line}" fill="none" stroke="#c6f432" stroke-opacity=".7" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>${dots}<path d="M${f[0]},${f[1]-6} V${f[1]-26}" stroke="#fff" stroke-width="2"/><path d="M${f[0]+1},${f[1]-26} l13,4 -13,5z" fill="#e0558f"/></svg>`;
+}
+function heroToday(w){
+  const inWeek=w.weekStart===mondayOf(today);
+  const day=inWeek?today:w.weekStart;
+  const todays=w.workouts.filter(x=>x.date===day);
+  const nextW=allWorkouts().filter(x=>x.date>day).sort((a,b)=>a.date<b.date?-1:1)[0];
+  const doneDays=[0,1,2,3,4,5,6].map(i=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);return d<today&&xs.length&&xs.every(x=>['done','shifted'].includes((M[x.id]||{}).st))});
+  const label=inWeek?'Today · '+fmtLong(day):'Week of '+fmtD(w.weekStart);
+  let body;
+  if(!inWeek){body=`<h2>${esc(w.focus)}</h2><div class="lead">${esc(w.note||'')}</div>`}
+  else if(todays.length){const x=todays.find(y=>y.key)||todays[0];const first=(x.steps&&x.steps.length)?(x.steps.length>=3?x.steps[1][1]:x.steps[0][1]):x.details;
+    body=`<h2>${esc(x.title)}</h2><div class="meta">${x.dur?`<span><b>${x.dur}</b> min</span>`:''}${x.km?`<span><b>${x.km}</b> km</span>`:''}${todays.length>1?`<span>+ ${esc(todays.filter(y=>y!==x).map(y=>y.title).join(', '))}</span>`:''}</div>
+      <div class="lead">${fill(first||'')}</div><button class="go" onclick="openWo('${x.id}')">Open session</button>`}
+  else body=`<h2>Rest day</h2><div class="lead">Recovery is where the training sticks.${nextW?` Next up: <b>${esc(nextW.title)}</b> on ${fmtLong(nextW.date)}.`:''}</div>${nextW?`<button class="go" onclick="openWo('${nextW.id}')">Preview next session</button>`:''}`;
+  return `<section class="hero"><div class="sun"></div><div class="when">${label}</div>${body}${ridgeSvg(w,doneDays)}</section>`;
+}
+function weekStrip(w){
+  let h='';for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);
+    h+=`<button class="${d===today?'on':''} ${d<today?'past':''}" onclick="document.getElementById('d-${d}').scrollIntoView({behavior:'smooth',block:'start'})"><div class="w">${DOW[i].slice(0,2)}</div><div class="n">${parse(d).getDate()}</div><div class="dots">${xs.map(x=>`<i style="background:${(SP[x.sport]||['','#666'])[1]}"></i>`).join('')}</div></button>`}
+  return `<div class="strip" role="group" aria-label="Days this week">${h}</div>`;
+}
 let M={};
 function woCard(x){
   const [lbl,col]=SP[x.sport]||['',"#555"];
   const meta=x.sport==='race'?(x.km?x.km+' km':'Tri'):(x.km?x.km+' km':(x.dur?x.dur+"'":''));
   const m=M[x.id]||{};const st=m.st==='done'?'<span class="tiny st-done">✓ done</span>':m.st==='shifted'?'<span class="tiny st-shift">✓ moved</span>':m.st==='missed'?'<span class="tiny st-miss">✕ missed</span>':'';
   const first=(x.steps&&x.steps.length)?x.steps.map(s=>s[1]).filter((_,i,a)=>a.length<3||i===1||a.length===1).slice(0,1)[0]:x.details;
-  return `<button class="wo" style="--c:${col}" onclick="openWo('${x.id}')">
+  return `<button class="wo" style="--c:${col}" onclick="openWo('${x.id}')"><span class="ic">${ICON[x.sport]||''}</span><div>
     <div class="h">${x.slot?`<span class="tag slot">${x.slot}</span>`:''}<span class="ttl">${esc(x.title)}</span>${x.key?'<span class="tag key">KEY</span>':''}${st}<span class="meta">${meta}</span></div>
-    <div class="one">${fill(first||'')}</div><div class="more">Details ›</div></button>`;
+    <div class="one">${fill(first||'')}</div></div></button>`;
 }
 function vWeek(){
   M=matchAll();const L=weekList();if(S.weekIdx==null)S.weekIdx=curIdx();const w=L[S.weekIdx];if(!w)return '';
@@ -304,16 +400,17 @@ function vWeek(){
   const a=S.actuals[w.weekStart];
   let days='';
   for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const ws=w.workouts.filter(x=>x.date===d);
-    days+=`<div class="day ${d===today?'today':''} ${d<today?'past':''}"><div class="dn"><div class="w">${DOW[i]}</div><div class="n">${parse(d).getDate()}</div></div><div>${ws.length?ws.map(woCard).join(''):'<div class="restday">Rest — recovery is training too</div>'}</div></div>`}
+    days+=`<div class="day ${d===today?'today':''} ${d<today?'past':''}" id="d-${d}" style="scroll-margin-top:12px"><div class="dn"><div class="w">${DOW[i]}</div><div class="n">${parse(d).getDate()}</div></div><div>${ws.length?ws.map(woCard).join(''):'<div class="restday">Rest — recovery is training too</div>'}</div></div>`}
   const blk=BLOCKS.find(b=>w.weekStart>=mondayOf(b.from)&&w.weekStart<=b.to)||{};
   return `<div class="wknav"><button onclick="S.weekIdx=Math.max(0,S.weekIdx-1);render()" aria-label="Previous week">‹</button>
     <div class="t"><div class="d">${fmtD(w.weekStart)} – ${fmtD(addD(w.weekStart,6))}</div><div class="small muted">Week ${S.weekIdx+1} of ${L.length}${S.weekIdx!==curIdx()?` · <a href="#" onclick="S.weekIdx=curIdx();render();return false">this week</a>`:''}</div></div>
     <button onclick="S.weekIdx=Math.min(${L.length-1},S.weekIdx+1);render()" aria-label="Next week">›</button></div>
+  ${heroToday(w)}${weekStrip(w)}
   <div class="card"><div class="row wrapf"><span class="phase" style="background:${blk.col||'#333'}33;color:#eceef2;border-left:3px solid ${blk.col||'#555'}">${esc(blk.name||w.phase)}</span><span class="small muted">${esc(w.phase)}</span></div>
     <h2 style="font-size:18px;margin-top:8px">${esc(w.focus)}</h2>${w.note?`<div class="note">${esc(w.note)}</div>`:''}
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div>
   <div class="card">${days}</div>
-  <div class="small muted" style="text-align:center">Tap any workout for the full session, purpose and coaching cues.</div>`;
+  <div class="small muted" style="text-align:center">Tap a session for the full workout, why it matters and coaching cues.</div>`;
 }
 function findWo(id){for(const w of weekList())for(const x of w.workouts||[])if(x.id===id)return x}
 function openWo(id){
@@ -361,7 +458,7 @@ function roadmap(){
   const maxH=Math.max(...hrsBy.map(o=>SPORTS.reduce((a,s)=>a+o[s],0)),1);const sc=H/Math.ceil(maxH);
   const ci=curIdx();let g='';
   // grid
-  for(let h=0;h<=Math.ceil(maxH);h+=2){const y=top+H-h*sc;g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/><text x="2" y="${y-3}" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${h}h</text>`}
+  for(let h=0;h<=Math.ceil(maxH);h+=2){const y=top+H-h*sc;g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/><text x="2" y="${y-3}" fill="var(--muted)" font-size="9" font-family="Figtree">${h}h</text>`}
   L.forEach((w,i)=>{const x=20+i*(BW+G);let y=top+H;const o=hrsBy[i];const tot=SPORTS.reduce((a,s)=>a+o[s],0);
     const tipT=`<b>${fmtD(w.weekStart)}</b> · ${esc(w.focus)}<br>${SPORTS.filter(s=>o[s]>0).map(s=>`${SP[s][0]} ${o[s].toFixed(1)} h`).join(' · ')}<br>Total ${tot.toFixed(1)} h · ${w.workouts.length} workouts`;
     if(i===ci)g+=`<rect x="${x-3}" y="${top-6}" width="${BW+6}" height="${H+12}" rx="5" fill="#c6f43214" stroke="var(--accent)" stroke-width="1"/>`;
@@ -373,21 +470,21 @@ function roadmap(){
   });
   // phase band
   BLOCKS.forEach(b=>{const i0=L.findIndex(w=>w.weekStart>=mondayOf(b.from));let i1=L.findIndex(w=>w.weekStart>b.to);if(i1<0)i1=L.length;if(i0<0)return;
-    const x0=20+i0*(BW+G),x1=20+i1*(BW+G)-G;g+=`<rect x="${x0}" y="${bandY}" width="${x1-x0}" height="18" rx="4" fill="${b.col}"/><text x="${x0+5}" y="${bandY+13}" fill="#fff" font-size="10.5" font-weight="600" font-family="Inter">${esc(b.name)}</text>`});
+    const x0=20+i0*(BW+G),x1=20+i1*(BW+G)-G;g+=`<rect x="${x0}" y="${bandY}" width="${x1-x0}" height="18" rx="4" fill="${b.col}"/><text x="${x0+5}" y="${bandY+13}" fill="#fff" font-size="10.5" font-weight="600" font-family="Figtree">${esc(b.name)}</text>`});
   // months
-  let lastM='';L.forEach((w,i)=>{const d=parse(w.weekStart);const mm=d.toLocaleDateString('en-GB',{month:'short'});if(mm!==lastM){lastM=mm;const x=20+i*(BW+G);g+=`<text x="${x}" y="${bandY+36}" fill="var(--muted)" font-size="10" font-family="Inter">${mm}${d.getMonth()===0?' ’'+String(d.getFullYear()).slice(2):''}</text>`}});
+  let lastM='';L.forEach((w,i)=>{const d=parse(w.weekStart);const mm=d.toLocaleDateString('en-GB',{month:'short'});if(mm!==lastM){lastM=mm;const x=20+i*(BW+G);g+=`<text x="${x}" y="${bandY+36}" fill="var(--muted)" font-size="10" font-family="Figtree">${mm}${d.getMonth()===0?' ’'+String(d.getFullYear()).slice(2):''}</text>`}});
   // races
   RACE_ORDER.forEach(k=>{const r=RT()[k];if(!r)return;const wi=L.findIndex(w=>w.weekStart===mondayOf(r.date));if(wi<0)return;const x=20+wi*(BW+G)+BW/2+(dBetween(mondayOf(r.date),r.date)-3)*2;
-    g+=`<line x1="${x}" x2="${x}" y1="14" y2="${top+H}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M${x},6 l9,4 -9,4z" fill="var(--accent)"/><text x="${x+11}" y="14" fill="var(--accent)" font-size="10.5" font-weight="600" font-family="Inter" data-tip="${esc(r.name+' · '+fmtD(r.date)+' · target '+r.goal)}">${esc(r.name.split(' ')[0])}</text>`});
+    g+=`<line x1="${x}" x2="${x}" y1="14" y2="${top+H}" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/><path d="M${x},6 l9,4 -9,4z" fill="var(--accent)"/><text x="${x+11}" y="14" fill="var(--accent)" font-size="10.5" font-weight="600" font-family="Figtree" data-tip="${esc(r.name+' · '+fmtD(r.date)+' · target '+r.goal)}">${esc(r.name.split(' ')[0])}</text>`});
   // today
-  const tw=L.findIndex(w=>w.weekStart===mondayOf(today));if(tw>=0){const x=20+tw*(BW+G)+((parse(today).getDay()+6)%7)/7*BW;g+=`<line x1="${x}" x2="${x}" y1="${top-6}" y2="${bandY+18}" stroke="#fff" stroke-width="1.5"/><text x="${x+3}" y="${bandY+50}" fill="#fff" font-size="10" font-family="Inter">today</text>`}
+  const tw=L.findIndex(w=>w.weekStart===mondayOf(today));if(tw>=0){const x=20+tw*(BW+G)+((parse(today).getDay()+6)%7)/7*BW;g+=`<line x1="${x}" x2="${x}" y1="${top-6}" y2="${bandY+18}" stroke="#fff" stroke-width="1.5"/><text x="${x+3}" y="${bandY+50}" fill="#fff" font-size="10" font-family="Figtree">today</text>`}
   return `<div class="scroll" id="roadScroll" data-cur="${20+ci*(BW+G)}"><svg width="${W}" height="${bandY+56}" style="display:block">${g}</svg></div>`;
 }
 function vSeason(){
   const L=weekList();const ci=curIdx();const {vd}=paces();
   const blocks=BLOCKS.map(b=>{const tot=dBetween(b.from,b.to)+1;const el=Math.max(0,Math.min(tot,dBetween(b.from,today)+1));const cur=today>=b.from&&today<=b.to;
     const wks=L.filter(w=>w.weekStart>=mondayOf(b.from)&&w.weekStart<=b.to).length;
-    return `<div class="blk ${cur?'cur':''}"><div class="rail" style="background:${b.col}"></div><div><div class="row between"><b class="t1" style="font-family:Archivo;font-size:15.5px">${esc(b.name)}</b><span class="small muted mono">${fmtD(b.from)} – ${fmtD(b.to)} · ${wks} wk</span></div>
+    return `<div class="blk ${cur?'cur':''}"><div class="rail" style="background:${b.col}"></div><div><div class="row between"><b class="t1" style="font-family:"Bricolage Grotesque";font-size:15.5px">${esc(b.name)}</b><span class="small muted mono">${fmtD(b.from)} – ${fmtD(b.to)} · ${wks} wk</span></div>
       <div class="small" style="color:var(--sub);margin-top:3px">${esc(b.why)}</div><div class="row wrapf" style="gap:6px;margin-top:6px">${b.targets.map(t=>`<span class="chip" style="padding:2px 8px;font-size:11.5px">${esc(t)}</span>`).join('')}</div>
       ${el>0?`<div class="prog"><i style="width:${el/tot*100}%"></i></div><div class="tiny muted" style="margin-top:3px">${el>=tot?'Completed':Math.round(el/tot*100)+'% through'}</div>`:''}</div></div>`}).join('');
   const races=RACE_ORDER.map(k=>raceCard(k,vd)).join('');
@@ -439,9 +536,9 @@ function lineChart(pts,{h=110,col='var(--accent)',unit='',fmt=v=>v,title=''}={})
   pts=pts.filter(p=>p.v!=null&&!isNaN(p.v));if(pts.length<2)return `<div class="tiny muted" style="padding:16px 0">Not enough data yet — ${pts.length?'1 point so far':'starts with the first Sunday sync'}.</div>`;
   const W=320,pl=34,pr=8,pt=10,pb=18;const vs=pts.map(p=>+p.v);let mn=Math.min(...vs),mx=Math.max(...vs);if(mn===mx){mn-=1;mx+=1}const pad_=(mx-mn)*.15;mn-=pad_;mx+=pad_;
   const X=i=>pl+i/(pts.length-1)*(W-pl-pr),Y=v=>pt+(1-(v-mn)/(mx-mn))*(h-pt-pb);
-  let g=[0,.5,1].map(f=>{const v=mn+(mx-mn)*f;return `<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${fmt(+v.toFixed(1))}</text>`}).join('');
+  let g=[0,.5,1].map(f=>{const v=mn+(mx-mn)*f;return `<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${pl-4}" y="${Y(v)+3}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="Figtree">${fmt(+v.toFixed(1))}</text>`}).join('');
   g+=`<polyline points="${pts.map((p,i)=>X(i)+','+Y(p.v)).join(' ')}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`;
-  g+=`<text x="${pl}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="Inter">${fmtD(pts[0].d)}</text><text x="${W-pr}" y="${h-4}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="Inter">${fmtD(pts[pts.length-1].d)}</text>`;
+  g+=`<text x="${pl}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="Figtree">${fmtD(pts[0].d)}</text><text x="${W-pr}" y="${h-4}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="Figtree">${fmtD(pts[pts.length-1].d)}</text>`;
   const last=pts[pts.length-1];g+=`<circle cx="${X(pts.length-1)}" cy="${Y(last.v)}" r="4" fill="${col}" stroke="var(--card)" stroke-width="2"/>`;
   const step=(W-pl-pr)/(pts.length-1);
   g+=pts.map((p,i)=>`<rect x="${X(i)-step/2}" y="0" width="${step}" height="${h}" fill="transparent" data-tip="<b>${fmtD(p.d)}</b><br>${esc(title)} ${fmt(p.v)}${unit}"/>`).join('');
@@ -450,12 +547,12 @@ function lineChart(pts,{h=110,col='var(--accent)',unit='',fmt=v=>v,title=''}={})
 function barsPA(rows,{h=140,unit='',title=''}={}){ // planned (outline) vs actual (filled) per week
   if(!rows.length)return '';const W=Math.max(320,rows.length*14+40),pl=30,pb=18,pt=8;const mx=Math.max(1,...rows.map(r=>Math.max(r.p||0,r.a||0)));
   const bw=(W-pl-8)/rows.length;const Y=v=>pt+(1-v/mx)*(h-pt-pb);
-  let g=[0,.5,1].map(f=>`<line x1="${pl}" x2="${W}" y1="${Y(mx*f)}" y2="${Y(mx*f)}" stroke="var(--grid)"/><text x="${pl-4}" y="${Y(mx*f)+3}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="JetBrains Mono">${Math.round(mx*f)}</text>`).join('');
+  let g=[0,.5,1].map(f=>`<line x1="${pl}" x2="${W}" y1="${Y(mx*f)}" y2="${Y(mx*f)}" stroke="var(--grid)"/><text x="${pl-4}" y="${Y(mx*f)+3}" text-anchor="end" fill="var(--muted)" font-size="9" font-family="Figtree">${Math.round(mx*f)}</text>`).join('');
   rows.forEach((r,i)=>{const x=pl+i*bw+1.5,w=Math.max(3,bw-3);
     if(r.p)g+=`<rect x="${x}" y="${Y(r.p)}" width="${w}" height="${Y(0)-Y(r.p)}" rx="2" fill="none" stroke="#5b6372" stroke-width="1"/>`;
     if(r.a!=null&&r.a>0)g+=`<rect x="${x+1.5}" y="${Y(r.a)}" width="${Math.max(1,w-3)}" height="${Y(0)-Y(r.a)}" rx="2" fill="${r.col||'var(--run)'}"/>`;
     g+=`<rect x="${x-1}" y="0" width="${bw}" height="${h}" fill="transparent" data-tip="<b>${fmtD(r.d)}</b><br>${esc(title)}: planned ${(+r.p||0).toFixed(1)}${unit}${r.a!=null?` · done ${(+r.a).toFixed(1)}${unit}`:' · no Garmin data'}"/>`});
-  const months=[];let lm='';rows.forEach((r,i)=>{const mm=parse(r.d).toLocaleDateString('en-GB',{month:'short'});if(mm!==lm){lm=mm;g+=`<text x="${pl+i*bw}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="Inter">${mm}</text>`}});
+  const months=[];let lm='';rows.forEach((r,i)=>{const mm=parse(r.d).toLocaleDateString('en-GB',{month:'short'});if(mm!==lm){lm=mm;g+=`<text x="${pl+i*bw}" y="${h-4}" fill="var(--muted)" font-size="9" font-family="Figtree">${mm}</text>`}});
   return `<div class="scroll"><svg width="${W}" height="${h}" style="display:block">${g}</svg></div>`;
 }
 function vStats(){
