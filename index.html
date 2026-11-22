@@ -189,6 +189,17 @@ h2.sec{font-size:19px;font-weight:800}
 .strip .past{opacity:.6}
 @media (prefers-reduced-motion:no-preference){.hero{animation:rise .5s ease-out both}@keyframes rise{from{opacity:0;transform:translateY(8px)}}}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+.ins h3{font-size:15.5px;margin:4px 0 6px;line-height:1.3}.ins .fd{font-family:Figtree,system-ui,sans-serif;font-size:13px;color:var(--text);background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;font-variant-numeric:tabular-nums}
+.ins p{font-size:13.5px;color:var(--sub);margin:8px 0 0;line-height:1.45}.ins .act{font-size:13.5px;margin-top:8px}.ins .act b{color:var(--accent)}
+.vtag{font-size:11.5px;font-weight:700;text-transform:capitalize}
+.insh{display:flex;flex-direction:column;gap:10px}.insh .hl{font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;line-height:1.25}
+.insg{display:flex;gap:12px;align-items:center}
+.ro{padding:9px 0;border-top:1px solid var(--line)}.ro:first-of-type{border-top:0}.ro .bar{height:6px;border-radius:3px;background:var(--grid);margin:7px 0 5px;overflow:hidden}.ro .bar i{display:block;height:100%;border-radius:3px}
+.fl{margin:8px 0 0 18px;padding:0;font-size:13.5px;line-height:1.5}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;margin-right:6px;vertical-align:-1px;animation:sp 0.8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
 </style>
 </head>
 <body>
@@ -206,7 +217,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
   <button data-t="season"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-6 4 4 8-9"/><path d="M14 6h6v6"/></svg>Season</button>
   <button data-t="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Stats</button>
   <button data-t="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Review<span id="badge" class="badge hide"></span></button>
-  <button data-t="garmin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Garmin</button>
+  <button data-t="garmin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Insights</button>
 </div></nav>
 <div id="ov" class="ov" onclick="closeSheet()"></div>
 <div id="sheet" class="sheet" role="dialog" aria-modal="true"><div class="grab"></div><button class="x" onclick="closeSheet()" aria-label="Close">✕</button><div class="in" id="sheetIn"></div></div>
@@ -737,16 +748,171 @@ async function addNote(){const t=document.getElementById('noteTxt'),m=document.g
   try{await S.db.collection('notes').add({text:txt,createdAt:new Date().toISOString(),status:'open'});t.value='';m.innerHTML='<span class="okmsg">Saved</span>'}catch(e){m.innerHTML=`<span class="err">${esc(e.message||e.code)}</span>`}}
 
 // ================================================================== GARMIN
+// ================================================================== INSIGHTS (Garmin tab): coach analysis + manual refresh
+const RACE_M={mazeikiai:10000,kaunas:21097.5,riga:21097.5,tallinn:42195};
+const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+const sd=a=>{if(a.length<2)return null;const m=avg(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))};
+const r1=(v,n=1)=>v==null||isNaN(v)?'—':(+v).toFixed(n);
+const sgn=(v,n=1)=>v==null||isNaN(v)?'—':(v>0?'+':'')+(+v).toFixed(n);
+function slopePct(pts){ // linear fit over days; % change across the span
+  if(pts.length<3)return null;const x0=parse(pts[0].d);const X=pts.map(p=>(parse(p.d)-x0)/864e5),Y=pts.map(p=>p.v);
+  const mx=avg(X),my=avg(Y);let n=0,d=0;X.forEach((x,i)=>{n+=(x-mx)*(Y[i]-my);d+=(x-mx)**2});if(!d)return null;
+  const b=n/d,a=my-b*mx;const s=a,e=a+b*X[X.length-1];return {pct:(e-s)/s*100,start:s,end:e,days:X[X.length-1]};
+}
+const allActs=()=>Object.values(S.actuals).flatMap(a=>a.activities||[]).filter(a=>a.date).sort((a,b)=>a.date<b.date?-1:1);
+function maxHrEst(){const m=Math.max(0,...allActs().map(a=>+a.maxHr||0));return m>170?m:196}
+const LTHR=()=>+((Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1).pop()||{}).lthr)||181;
+function actLoad(a){ // Garmin load if present, else Banister TRIMP estimate from avg HR
+  if(a.load!=null)return {v:+a.load,est:false};
+  if(!a.min)return {v:0,est:true};
+  if(!a.avgHr)return {v:a.sport==='strength'?a.min*0.6:a.min*0.9,est:true};
+  const rest=46,mx=maxHrEst();const r=Math.max(0,Math.min(1,(a.avgHr-rest)/(mx-rest)));return {v:a.min*r*0.64*Math.exp(1.92*r),est:true};
+}
+function dailyLoads(endD,days){const acts=allActs();const out=[];let est=false;for(let i=days-1;i>=0;i--){const d=addD(endD,-i);const L=acts.filter(a=>a.date===d).reduce((s,a)=>{const l=actLoad(a);est=est||l.est;return s+l.v},0);out.push({d,v:L})}return {out,est}}
+
+function analyze(){
+  const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);const L=Mx[Mx.length-1]||{};
+  const acts=allActs();const end=addD(today,-1)<(acts.length?acts[acts.length-1].date:today)?today:addD(today,-1);
+  const C={};const out=[];
+  // ---------- 1. Recovery / readiness
+  const daily=(L.daily||[]).filter(x=>x&&x.date).sort((a,b)=>a.date<b.date?-1:1);
+  const hrvs=daily.filter(x=>x.hrv).map(x=>+x.hrv),rhrs=daily.filter(x=>x.rhr).map(x=>+x.rhr),sls=daily.filter(x=>x.sleepScore).map(x=>+x.sleepScore),slh=daily.filter(x=>x.sleepH).map(x=>+x.sleepH);
+  let rd=null;
+  if(hrvs.length>=10){
+    const ln=hrvs.map(Math.log),b=ln.slice(0,-7).length>=5?ln.slice(0,-7):ln,w7=ln.slice(-7);const z=(avg(w7)-avg(b))/(sd(b)||1);
+    const h7=avg(hrvs.slice(-7)),h28=avg(hrvs);const hp=(h7-h28)/h28*100;
+    const rr7=rhrs.length?avg(rhrs.slice(-7)):null,rr28=rhrs.length?avg(rhrs):null,rd_=rr7!=null?rr7-rr28:null;
+    const s7=sls.length?avg(sls.slice(-7)):null,sh7=slh.length?avg(slh.slice(-7)):null;
+    let score=70+Math.max(-30,Math.min(15,z*12))-(rd_!=null?Math.max(0,rd_)*4:0)+(s7!=null?(s7-70)*0.4:0);score=Math.round(Math.max(0,Math.min(100,score)));
+    Object.assign(C,{'HRV 7-day (ms)':r1(h7,0),'HRV 28-day (ms)':r1(h28,0),'HRV change':sgn(hp)+' %','HRV z-score (ln)':sgn(z,2),'RHR 7-day vs 28-day':sgn(rd_)+' bpm','Sleep score 7-day':r1(s7,0),'Sleep hours 7-day':r1(sh7)});
+    const v=z<-1||(rd_!=null&&rd_>=4)||(s7!=null&&s7<55)?'act':z<-0.5||(rd_!=null&&rd_>=2)||(s7!=null&&s7<65)?'watch':'good';
+    rd={verdict:v==='good'?'green':v==='watch'?'amber':'red',score};
+    out.push({area:'Recovery',verdict:v,title:v==='good'?'Your body is absorbing the training':v==='watch'?'Recovery is lagging slightly':'Your body is asking for an easier few days',
+      finding:`HRV 7-day ${r1(h7,0)} ms vs ${r1(h28,0)} ms 28-day baseline (${sgn(hp)} %, z ${sgn(z,2)}); resting HR ${sgn(rd_)} bpm vs baseline${s7!=null?`; sleep score ${r1(s7,0)}${sh7?` / ${r1(sh7)} h`:''}`:''}.`,
+      meaning:z>0.5?'HRV above your normal range means your nervous system is coping well — this is the window where hard sessions pay off most.':z<-1?'HRV more than one standard deviation below normal is a real signal, not noise: fatigue is accumulating faster than you recover (training, baby nights, or illness brewing).':'HRV inside your normal band — nothing to react to, normal training is fine.',
+      action:v==='good'?'Do the key sessions as written.':v==='watch'?'Keep key sessions but cap them at "comfortably hard"; protect sleep for 2–3 nights.':'Turn the next quality session into an easy run and keep strength light until HRV is back inside the band.'});
+  } else if(L.hrvAvg){
+    const hp=(L.hrvAvg-82)/82*100,rd_=L.rhr?L.rhr-46:null;C['HRV vs 82 ms baseline']=sgn(hp)+' %';C['RHR vs 46 bpm']=sgn(rd_)+' bpm';
+    const v=hp<-10||(rd_!=null&&rd_>=5)?'act':hp<-5||(rd_!=null&&rd_>=3)?'watch':'good';rd={verdict:v==='good'?'green':v==='watch'?'amber':'red',score:Math.round(Math.max(0,Math.min(100,75+hp*1.5-(rd_||0)*4)))};
+    out.push({area:'Recovery',verdict:v,title:v==='good'?'Recovery markers are normal':'Recovery markers are below your normal',finding:`HRV ${L.hrvAvg} ms (${sgn(hp)} % vs your 82 ms baseline), resting HR ${L.rhr||'—'} bpm (${sgn(rd_,0)} vs 46).`,
+      meaning:'Weekly averages only — daily values would show whether this is one bad night or a trend.',action:v==='good'?'Train as planned.':'Watch the next 3 mornings; if HRV stays low, make the next hard day easy.'});
+  }
+  // ---------- 2. Load
+  const {out:dl,est}=dailyLoads(end,42);
+  if(acts.length){
+    const last7=dl.slice(-7).map(x=>x.v),prev7=dl.slice(-14,-7).map(x=>x.v),last28=dl.slice(-28).map(x=>x.v);
+    const acute=last7.reduce((s,x)=>s+x,0),chronic=last28.reduce((s,x)=>s+x,0)/4,ratio=chronic?acute/chronic:null,prevA=prev7.reduce((s,x)=>s+x,0);
+    const mono=sd(last7)?avg(last7)/sd(last7):null,strain=mono?acute*mono:null;
+    Object.assign(C,{'Load 7 days':r1(acute,0),'Load 28-day weekly avg':r1(chronic,0),'Acute:chronic ratio':r1(ratio,2),'Load vs previous week':prevA?sgn((acute-prevA)/prevA*100,0)+' %':'—','Monotony':r1(mono,2),'Strain':r1(strain,0)});
+    if(est)C['Load source']='estimated from HR (TRIMP) where Garmin load missing';
+    const v=ratio!=null&&(ratio>1.5||ratio<0.6)||mono>2.2?'act':ratio!=null&&(ratio>1.3||ratio<0.8)||mono>1.8?'watch':'good';
+    out.push({area:'Load',verdict:v,title:ratio>1.3?'You are ramping up faster than your body is used to':ratio!=null&&ratio<0.8?'Training load is below what you are built for':'Load is building at a safe rate',
+      finding:`7-day load ${r1(acute,0)} vs ${r1(chronic,0)} weekly average over 28 days → ratio ${r1(ratio,2)}${prevA?` (${sgn((acute-prevA)/prevA*100,0)} % vs last week)`:''}; monotony ${r1(mono,2)}.`,
+      meaning:ratio>1.5?'Above 1.5 injury risk climbs sharply — tendons adapt slower than lungs.':ratio>1.3?'1.3–1.5 is the "productive but careful" zone; fine for one week, not three in a row.':ratio!=null&&ratio<0.8?'Expected after Larnaka, but if it stays under 0.8 you start losing the marathon fitness you built.':'0.8–1.3 is the sweet spot: enough stimulus to improve, low injury risk.'+(mono>1.8?' But your days are too similar — monotony above 1.8 means easy days are not easy enough.':''),
+      action:ratio>1.3?'Hold volume next week; no extra sessions.':ratio!=null&&ratio<0.8?'Complete the planned sessions — the plan already brings the ratio back to ~1.0.':mono>1.8?'Make easy days truly easy (shorter, slower) so hard days stand out.':'Keep progressing as planned.'});
+  }
+  // ---------- 3. Intensity distribution
+  const z2c=Math.round(LTHR()*0.85);
+  const recent=acts.filter(a=>a.date>=addD(end,-27)&&(a.sport==='run'||a.sport==='bike')&&a.min);
+  if(recent.length){
+    let e=0,m=0,h=0,src='zones';
+    recent.forEach(a=>{if(Array.isArray(a.zones)&&a.zones.length===5){e+=a.zones[0]+a.zones[1];m+=a.zones[2];h+=a.zones[3]+a.zones[4]}else if(a.avgHr){src='avg HR';const s=a.min*60;if(a.avgHr<=z2c)e+=s;else if(a.avgHr<LTHR()*0.94)m+=s;else h+=s}});
+    const T=e+m+h;if(T){const pe=e/T*100,pm=m/T*100,ph=h/T*100;Object.assign(C,{'Easy (Z1–2) share 28 d':r1(pe,0)+' %','Moderate (Z3) share':r1(pm,0)+' %','Hard (Z4–5) share':r1(ph,0)+' %','Z2 ceiling used':z2c+' bpm','Intensity source':src});
+      const easyTooHard=acts.filter(a=>a.date>=addD(end,-27)&&a.sport==='run'&&a.avgHr&&a.km&&a.min&&/easy|recovery|base/i.test(a.name||'')&&a.avgHr>z2c);
+      const v=pe<65||pm>25?'act':pe<75||pm>15?'watch':'good';
+      out.push({area:'Intensity',verdict:v,title:pm>15?'Too much time in the "grey zone"':pe>=75?'Good easy/hard balance':'Easy running is not easy enough',
+        finding:`Last 28 days: ${r1(pe,0)} % easy · ${r1(pm,0)} % moderate · ${r1(ph,0)} % hard (target ≈ 80 / 5 / 15 in base phase)${easyTooHard.length?`; ${easyTooHard.length} easy run(s) averaged above your ${z2c} bpm Z2 ceiling`:''}.`,
+        meaning:pm>15?'Zone 3 is hard enough to tire you but too easy to raise threshold — it steals recovery from the sessions that build 10K speed.':'Polarised training — mostly easy, a little very hard — is what builds both the aerobic base and the speed for sub-45.',
+        action:pm>15||easyTooHard.length?`Run easy days by heart rate: stay under ${z2c} bpm even if pace feels slow.`:'Keep it this way.'});}
+  }
+  // ---------- 4. Aerobic engine (EF + decoupling)
+  const ef=acts.filter(a=>a.sport==='run'&&a.avgHr&&a.km>=5&&a.min&&a.avgHr<=LTHR()*0.92&&a.date>=addD(end,-48)).map(a=>({d:a.date,v:(a.km*1000/a.min)/a.avgHr}));
+  if(ef.length>=3){const s=slopePct(ef);C['Efficiency factor now']=r1(s.end,3);C['EF change']=sgn(s.pct)+' % over '+Math.round(s.days)+' d';
+    const dc=acts.filter(a=>a.decoupling!=null).slice(-3);if(dc.length)C['Last long-run decoupling']=dc.map(a=>fmtD(a.date)+' '+r1(a.decoupling)+' %').join(', ');
+    const v=s.pct>=1?'good':s.pct>-2?'watch':'act';
+    out.push({area:'Aerobic engine',verdict:v,title:s.pct>=1?'You run faster at the same heart rate':s.pct>-2?'Aerobic efficiency is flat':'Aerobic efficiency is slipping',
+      finding:`Efficiency factor (metres per minute per heartbeat, easy runs ≥5 km) ${r1(s.start,3)} → ${r1(s.end,3)}: ${sgn(s.pct)} % over ${Math.round(s.days)} days (${ef.length} runs)${dc.length?`; long-run decoupling ${dc.map(a=>r1(a.decoupling)+' %').join(', ')}`:''}.`,
+      meaning:s.pct>=1?'Each heartbeat moves you further — the clearest sign the aerobic base is growing, and it feeds directly into race pace.':s.pct>-2?'Normal in recovery weeks after a marathon; it should start rising once consistent easy volume returns.':'Fatigue, heat or illness push HR up at a given pace — check recovery before adding intensity.'+(dc.some(a=>a.decoupling>5)?' Decoupling above 5 % means HR drifted up in the second half: endurance for that duration is not there yet.':''),
+      action:s.pct>=1?'Keep the easy volume consistent — this is working.':'Prioritise consistent easy runs over extra speed work for the next 2 weeks.'});}
+  // ---------- 5. Race outlook
+  const st=S.settings||{};const rp=L.racePredictions||{};const predV=[['10k',10000],['half',21097.5],['marathon',42195]].map(([k,d])=>{const s=toSec(rp[k]);return s?vdotFrom(d,s):null}).filter(Boolean);
+  const vNow=Math.max(+st.vdot||0,predV.length?Math.max(...predV):0)||null;
+  const ro=[];
+  if(vNow){C['VDOT (plan)']=r1(st.vdot);if(predV.length)C['VDOT from Garmin predictor']=r1(Math.max(...predV));
+    for(const k of ['mazeikiai','riga','tallinn']){const r=RT()[k];if(!r||!r.date||r.date<today)continue;const tg=toSec(r.goal);if(!tg)continue;const d=RACE_M[k];
+      const need=vdotFrom(d,tg),wk=Math.max(1,dBetween(today,r.date)/7),gap=need-vNow,per=gap/wk,pred=raceTime(vNow,d);
+      const verdict=gap<=0?'ahead':per<=0.15?'on track':per<=0.3?'behind':'unlikely';
+      C[`${r.name}: VDOT needed`]=r1(need);C[`${r.name}: needed per week`]=sgn(per,2);
+      ro.push({race:k,name:r.name,target:r.goal,predicted:hms(pred),vdotNow:vNow,vdotNeeded:need,weeksLeft:Math.round(wk),verdict,gapSec:pred-tg,
+        reasoning:gap<=0?`Current fitness already supports ${r.goal} (${hms(pred)} predicted). Goal now is to arrive healthy and fresh.`:`Needs +${r1(gap)} VDOT in ${Math.round(wk)} weeks = ${r1(per,2)}/week. A well-trained runner gains about 0.1–0.2 per week in a good block, ${per<=0.15?'so this is realistic if training stays consistent.':per<=0.3?'so it needs near-perfect consistency — plan a re-check after the next test.':'which is more than training normally delivers — consider an intermediate goal.'}`});}
+    if(ro.length){const worst=ro.find(x=>x.verdict==='unlikely'||x.verdict==='behind');
+      out.push({area:'Race outlook',verdict:worst?worst.verdict==='unlikely'?'act':'watch':'good',title:worst?`${worst.name} target needs more fitness than you have now`:'Your targets match your fitness trajectory',
+        finding:ro.map(x=>`${x.name} ${x.target}: VDOT ${r1(x.vdotNow)} → ${r1(x.vdotNeeded)} needed (${x.gapSec>0?'+'+mmss(x.gapSec)+' too slow today':mmss(-x.gapSec)+' to spare'})`).join(' · '),
+        meaning:'VDOT converts any race time into one fitness number, so it tells you how much fitter you must get, not just how much faster.',action:worst?'The plan targets this gap; the Mažeikiai result in February will settle whether Riga sub-1:35 stays.':'Stay consistent — no extra intensity needed.'});}
+  }
+  // ---------- 6. Swim
+  const sw=acts.filter(a=>a.sport==='swim'&&a.km&&a.min);const swPlan=allWorkouts().filter(x=>x.sport==='swim'&&x.date<today&&x.date>=addD(today,-28)).length,swDone=sw.filter(a=>a.date>=addD(today,-28)).length;
+  if(sw.length||swPlan){const pts=sw.map(a=>({d:a.date,v:a.min*60/(a.km*10)}));const s=slopePct(pts);C['Swims done / planned (28 d)']=swDone+' / '+swPlan;if(s)C['Swim pace trend']=sgn(-s.pct)+' % faster';
+    const v=swPlan&&swDone/swPlan<0.6?'act':s&&s.pct>2?'watch':'good';
+    out.push({area:'Swim',verdict:v,title:swPlan&&swDone/swPlan<0.6?'Swims are being skipped — the triathlon\'s biggest risk':'Swim skill is building',
+      finding:`${swPlan?`${swDone} of ${swPlan} planned swims done`:`${swDone} swims`} in 28 days${s?`; pace per 100 m ${mmss(s.start)} → ${mmss(s.end)} (${sgn(-s.pct)} % faster)`:''}.`,
+      meaning:'For a beginner, swim progress comes from frequency more than effort: 3 short swims beat 1 long one, because technique is motor learning.',action:swPlan&&swDone/swPlan<0.6?'Book fixed pool slots for the week — treat them like key run sessions.':'Keep 2+ swims a week; add length only when the drills feel smooth.'});}
+  // ---------- 7. Consistency
+  const MM=matchAll();const pastK=allWorkouts().filter(x=>x.date<today&&MM[x.id]&&!['nodata','future'].includes(MM[x.id].st));
+  if(pastK.length>=4){const ok=x=>['done','shifted'].includes(MM[x.id].st);const key=pastK.filter(x=>x.key),miss=pastK.filter(x=>!ok(x));
+    const byDay={},byType={};miss.forEach(x=>{const d=DOW[(parse(x.date).getDay()+6)%7];byDay[d]=(byDay[d]||0)+1;byType[x.sport]=(byType[x.sport]||0)+1});
+    const topD=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0],topT=Object.entries(byType).sort((a,b)=>b[1]-a[1])[0];const pc=(pastK.length-miss.length)/pastK.length*100,kp=key.length?key.filter(ok).length/key.length*100:null;
+    Object.assign(C,{'Sessions done':`${pastK.length-miss.length} / ${pastK.length} (${r1(pc,0)} %)`,'Key sessions done':kp!=null?r1(kp,0)+' %':'—'});
+    const v=pc>=85?'good':pc>=70?'watch':'act';
+    out.push({area:'Consistency',verdict:v,title:pc>=85?'Consistency is your strongest asset right now':'Missed sessions are costing fitness',
+      finding:`${r1(pc,0)} % of sessions done${kp!=null?`, ${r1(kp,0)} % of key sessions`:''}${miss.length&&topD?`; most misses on ${topD[0]} (${topD[1]}) and in ${SP[topT[0]]?SP[topT[0]][0]:topT[0]} (${topT[1]})`:''}.`,
+      meaning:'Fitness comes from stacking normal weeks — 90 % of a sensible plan beats 100 % of a perfect one done in bursts.',action:miss.length&&topD?`Look at ${topD[0]}s: if that day is always busy, ask the coach to move that session in Review.`:'Keep it up.'});}
+  return {out,C,rd,ro};
+}
+
+// ---------- refresh button
+function refreshState(){
+  const r=S.refresh||{};const last=Object.values(S.metrics).map(m=>m.syncedAt||'').sort().pop()||'';
+  if(r.requestedAt&&r.requestedAt>last){const mins=(Date.now()-new Date(r.requestedAt))/6e4;
+    if(r.status==='error')return {s:'error',t:r.error||'Could not start the update.'};
+    if(mins<40)return {s:'running',t:`Update running since ${new Date(r.requestedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — usually 5–15 min. Your PC must be on with the Claude app open.`};
+    return {s:'stale',t:'The last update did not finish. Is your PC on with the Claude app open? Try again.'};}
+  return {s:'idle',t:last?`Last Garmin sync: ${new Date(last).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · automatic every Sunday 19:00`:'Not synced yet · automatic every Sunday 19:00'};
+}
+async function forceRefresh(btn){
+  btn.disabled=true;const m=document.getElementById('refMsg');m.textContent='Starting…';
+  try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:getKey(),action:'refresh'})});const j=await r.json();
+    if(j.error)throw new Error(j.error);S.refresh=j.refresh||{requestedAt:new Date().toISOString(),status:'fired'};render();}
+  catch(e){m.textContent=e.message||String(e);btn.disabled=false}
+}
+function refreshCard(){const r=refreshState();
+  return `<div class="card refcard"><div class="row between" style="gap:10px;align-items:center"><div><h2 style="font-size:17px">Insights</h2><div class="small muted" id="refMsg" style="margin-top:3px">${esc(r.t)}</div></div>
+   <button class="btn p" style="white-space:nowrap" onclick="forceRefresh(this)" ${r.s==='running'?'disabled':''}>${r.s==='running'?'<span class="spin"></span>Updating':'Update from Garmin'}</button></div></div>`;}
+
+// ---------- view
+const VCOL={good:'var(--good)',watch:'var(--warn)',act:'var(--crit)',green:'var(--good)',amber:'var(--warn)',red:'var(--crit)',ahead:'var(--good)','on track':'var(--good)',behind:'var(--warn)',unlikely:'var(--crit)'};
+const VLBL={good:'Good',watch:'Watch',act:'Act'};
+function insCard(x){return `<div class="ins" style="border-left-color:${VCOL[x.verdict]||'var(--line)'}"><div class="row between" style="gap:8px"><span class="tiny muted">${esc(x.area)}</span><span class="vtag" style="color:${VCOL[x.verdict]}">${VLBL[x.verdict]||esc(x.verdict||'')}</span></div>
+  <h3>${esc(x.title)}</h3><div class="fd">${esc(x.finding||'')}</div>${x.meaning?`<p>${esc(x.meaning)}</p>`:''}${x.action?`<div class="act"><b>Do:</b> ${esc(x.action)}</div>`:''}</div>`}
 function vGarmin(){
-  const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);
-  if(!Mx.length)return `<div class="card"><h2 style="font-size:17px">Garmin</h2><div class="note">No Garmin data synced yet. Every Sunday at 19:00 the coach reads your Garmin data (activities, HRV, resting HR, sleep, training load, VO₂max, race predictor), writes it here and proposes updates in <b>Review</b>.</div><div class="note muted">Your coach reads Garmin every Sunday at 19:00 (custom Garmin connector on your PC, with Chrome as backup) and writes the results here.</div></div>${pacesCard()}`;
-  const L=Mx[Mx.length-1];const T=(l,k,u,f=x=>x)=>`<div class="tile"><div class="v">${L[k]!=null?f(L[k]):'—'}<span class="small muted">${u}</span></div><div class="l">${l}</div></div>`;const rp=L.racePredictions||{};
-  return `<div class="card"><div class="row between"><h2 style="font-size:17px">Latest Garmin check</h2><span class="small muted">${esc((L.syncedAt||'').slice(0,16).replace('T',' '))}</span></div>
-   <div class="tiles" style="margin-top:10px">${T('VO₂max','vo2max','')}${T('HRV 7-night','hrvAvg',' ms')}${T('Resting HR','rhr',' bpm')}${T('Sleep score','sleepScore','')}${T('Acute:chronic load','acwr','',x=>(+x).toFixed(2))}${T('Run km (week)','runKm','',x=>Math.round(x))}</div>
-   ${L.hrvStatus||L.trainingStatus?`<div class="note">HRV: <b>${esc(L.hrvStatus||'—')}</b> · Training status: <b>${esc(L.trainingStatus||'—')}</b>${L.compliance!=null?` · Compliance <b>${Math.round(L.compliance)}%</b>`:''}</div>`:''}${L.comment?`<div class="note">${esc(L.comment)}</div>`:''}</div>
-  <div class="card"><h2 style="font-size:17px">Garmin race predictor vs targets</h2><div class="kv" style="margin-top:8px">
-   <span class="k">10K (target ${esc((RT().mazeikiai||{}).goal||'')})</span><span class="mono">${esc(rp['10k']||'—')}</span><span class="k">Half (target ${esc((RT().riga||{}).goal||'')})</span><span class="mono">${esc(rp.half||'—')}</span><span class="k">Marathon (target ${esc((RT().tallinn||{}).goal||'')})</span><span class="mono">${esc(rp.marathon||'—')}</span></div></div>
-  ${pacesCard()}<div class="small muted" style="text-align:center">Trends and full season statistics are on the Stats tab.</div>`;
+  const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);const L=Mx[Mx.length-1]||{};const A=L.analysis||null;
+  const E=analyze();const rd=A&&A.readiness||E.rd;
+  const gauge=rd?`<div class="insg"><svg viewBox="0 0 120 70" width="120"><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="var(--grid)" stroke-width="10" stroke-linecap="round"/><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="${VCOL[rd.verdict]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${157*(rd.score||0)/100} 157"/><text x="60" y="58" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="24" fill="var(--text)">${rd.score??'—'}</text></svg>
+    <div><div class="tiny muted">Readiness</div><div style="font-weight:700;color:${VCOL[rd.verdict]}">${{green:'Ready to train',amber:'Train, but carefully',red:'Back off'}[rd.verdict]||''}</div>${rd.why?`<div class="small muted" style="margin-top:3px">${esc(rd.why)}</div>`:''}</div></div>`:'';
+  const head=A&&A.headline||L.comment;
+  const coach=A&&(A.sections||[]).length?`<h2 class="sec">Coach's analysis <span class="tiny muted">${esc((L.syncedAt||'').slice(0,10))}</span></h2>${A.sections.map(insCard).join('')}`:'';
+  const focus=A&&(A.focus||[]).length?`<div class="card"><h3 style="font-size:14.5px">Focus for the coming week</h3><ul class="fl">${A.focus.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`:'';
+  const ro=(A&&A.raceOutlook&&A.raceOutlook.length?A.raceOutlook.map(x=>({...x,name:(RT()[x.race]||{}).name||x.race})):E.ro);
+  const roH=ro.length?`<div class="card"><h3 style="font-size:14.5px;margin-bottom:6px">Race outlook</h3>${ro.map(x=>{const pctv=x.vdotNeeded?Math.min(100,x.vdotNow/x.vdotNeeded*100):0;return `<div class="ro"><div class="row between"><b>${esc(x.name)} · ${esc(x.target)}</b><span class="vtag" style="color:${VCOL[x.verdict]}">${esc(x.verdict)}</span></div>
+     <div class="bar"><i style="width:${pctv}%;background:${VCOL[x.verdict]}"></i></div><div class="tiny muted">Today's fitness: ${esc(x.predicted||'—')} · VDOT ${r1(x.vdotNow)} of ${r1(x.vdotNeeded)} needed · ${x.weeksLeft} weeks left</div><div class="small" style="margin-top:4px">${esc(x.reasoning||'')}</div></div>`}).join('')}</div>`:'';
+  const calc={...E.C,...(A&&A.calc||{})};
+  const maths=Object.keys(calc).length?`<details class="card"><summary style="font-weight:600">Show the maths</summary><div class="kv" style="margin-top:8px">${Object.entries(calc).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div>
+    <div class="tiny muted" style="margin-top:8px">Readiness: HRV z-score uses log HRV vs your 28-day baseline. Load ratio = last 7 days ÷ 28-day weekly average (Garmin load, or HR-based TRIMP when missing). Monotony = mean ÷ SD of daily load. Efficiency factor = metres per minute ÷ avg HR on easy runs. VDOT from Daniels' formula.</div></details>`:'';
+  const T=(l,v,u)=>`<div class="tile"><div class="v">${v??'—'}<span class="small muted">${u}</span></div><div class="l">${l}</div></div>`;
+  const raw=Mx.length?`<details class="card"><summary style="font-weight:600">Raw Garmin numbers</summary><div class="tiles" style="margin-top:10px">${T('VO₂max',L.vo2max,'')}${T('HRV 7-night',L.hrvAvg,' ms')}${T('Resting HR',L.rhr,' bpm')}${T('Sleep score',L.sleepScore,'')}${T('Acute:chronic',L.acwr!=null?(+L.acwr).toFixed(2):null,'')}${T('Run km (week)',L.runKm!=null?Math.round(L.runKm):null,'')}</div>${L.hrvStatus||L.trainingStatus?`<div class="note">HRV: <b>${esc(L.hrvStatus||'—')}</b> · Training status: <b>${esc(L.trainingStatus||'—')}</b></div>`:''}</details>`:'';
+  const autoB=E.out.length?E.out.map(insCard).join(''):'<div class="card empty">The analysis appears after the first Garmin sync (Sunday 19:00, or tap Update from Garmin).</div>';
+  const auto=A?`<details class="card"><summary style="font-weight:600">Live checks from your synced data</summary><div class="tiny muted" style="margin:6px 0">Recalculated in the app every time new data arrives.</div>${autoB}</details>`:`<h2 class="sec">Analysis</h2>${autoB}`;
+  return `${refreshCard()}${head||gauge?`<div class="card insh">${gauge}${head?`<div class="hl">${esc(head)}</div>`:''}</div>`:''}${focus}${coach}${roH}${auto}${maths}${raw}${pacesCard()}`;
 }
 
 // ================================================================== install / upgrade
@@ -829,6 +995,7 @@ render();
   coll('actuals',a=>{S.actuals={};a.forEach(x=>S.actuals[x.weekStart||x._id]=x)});
   coll('metrics',a=>{S.metrics={};a.forEach(x=>S.metrics[x.weekStart||x._id]=x)});
   coll('notes',a=>S.notes=a);
+  db.doc('meta/refresh').onSnapshot(d=>{S.refresh=d.exists?d.data():null;if(S.tab==='garmin')render()},()=>{});
   db.doc('settings/athlete').onSnapshot(d=>{S.settings=d.exists?d.data():null;render()},err);
 })();
 </script>
