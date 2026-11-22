@@ -875,19 +875,21 @@ function refreshState(){
   const r=S.refresh||{};const last=Object.values(S.metrics).map(m=>m.syncedAt||'').sort().pop()||'';
   if(r.requestedAt&&r.requestedAt>last){const mins=(Date.now()-new Date(r.requestedAt))/6e4;
     if(r.status==='error')return {s:'error',t:r.error||'Could not start the update.'};
-    if(mins<40)return {s:'running',t:`Update running since ${new Date(r.requestedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — usually 5–15 min. Your PC must be on with the Claude app open.`};
+    if(mins<40)return {s:'running',t:`Update requested at ${new Date(r.requestedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — new data appears here when the run finishes (usually 5–15 min after you tap Run now).`};
     return {s:'stale',t:'The last update did not finish. Is your PC on with the Claude app open? Try again.'};}
   return {s:'idle',t:last?`Last Garmin sync: ${new Date(last).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · automatic every Sunday 19:00`:'Not synced yet · automatic every Sunday 19:00'};
 }
+const TASK_URL='https://claude.ai/scheduled-task/trig_01Ctj2CnKSvYrjQEMMXP5qac';
 async function forceRefresh(btn){
-  btn.disabled=true;const m=document.getElementById('refMsg');m.textContent='Starting…';
-  try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({key:getKey(),action:'refresh'})});const j=await r.json();
-    if(j.error)throw new Error(j.error);S.refresh=j.refresh||{requestedAt:new Date().toISOString(),status:'fired'};render();}
-  catch(e){m.textContent=e.message||String(e);btn.disabled=false}
+  const r={requestedAt:new Date().toISOString(),status:'fired'};S.refresh=r;
+  window.open(TASK_URL,'_blank');
+  try{await S.db.doc('meta/refresh').set(r)}catch(e){}
+  render();
 }
 function refreshCard(){const r=refreshState();
   return `<div class="card refcard"><div class="row between" style="gap:10px;align-items:center"><div><h2 style="font-size:17px">Insights</h2><div class="small muted" id="refMsg" style="margin-top:3px">${esc(r.t)}</div></div>
-   <button class="btn p" style="white-space:nowrap" onclick="forceRefresh(this)" ${r.s==='running'?'disabled':''}>${r.s==='running'?'<span class="spin"></span>Updating':'Update from Garmin'}</button></div></div>`;}
+   <button class="btn p" style="white-space:nowrap" onclick="forceRefresh(this)">${r.s==='running'?'<span class="spin"></span>Updating':'Update from Garmin'}</button></div>
+   <div class="tiny muted" style="margin-top:8px">Opens your Garmin-check task in Claude — tap <b>Run now</b> there. Takes 5–15 min; your PC must be on with the Claude app open.</div></div>`;}
 
 // ---------- view
 const VCOL={good:'var(--good)',watch:'var(--warn)',act:'var(--crit)',green:'var(--good)',amber:'var(--warn)',red:'var(--crit)',ahead:'var(--good)','on track':'var(--good)',behind:'var(--warn)',unlikely:'var(--crit)'};
