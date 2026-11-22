@@ -679,8 +679,8 @@ function barsPA(rows,{h=140,unit='',title=''}={}){ // planned (outline) vs actua
   return `<div class="scroll"><svg width="${W}" height="${h}" style="display:block">${g}</svg></div>`;
 }
 function vStats(){
-  const L=weekList();M=matchAll();const all=allWorkouts();const past=all.filter(x=>x.date<today);
-  const known=past.filter(x=>M[x.id]&&M[x.id].st!=='nodata');
+  const L=weekList();M=matchAll();const all=allWorkouts();const past=all.filter(x=>x.date<today||(x.date===today&&['done','shifted'].includes((M[x.id]||{}).st)));
+  const known=past.filter(x=>M[x.id]&&!['nodata','future'].includes(M[x.id].st));
   const done=known.filter(x=>['done','shifted'].includes(M[x.id].st)),missed=known.filter(x=>M[x.id].st==='missed');
   const keyK=known.filter(x=>x.key),keyD=keyK.filter(x=>['done','shifted'].includes(M[x.id].st));
   const pctS=(a,b)=>b?Math.round(a/b*100)+'%':'—';
@@ -690,7 +690,7 @@ function vStats(){
   const hrsA=sum(acts,a=>a.min)/60;
   const elapsed=Math.max(0,dBetween(L[0].weekStart,today)),total=dBetween(L[0].weekStart,'2027-09-12');
   // streak of weeks with >=85% compliance
-  const wkComp=L.filter(w=>S.actuals[w.weekStart]&&addD(w.weekStart,6)<today).map(w=>{const ws=w.workouts.filter(x=>M[x.id]&&M[x.id].st!=='nodata');const d=ws.filter(x=>['done','shifted'].includes(M[x.id].st)).length;return {w:w.weekStart,c:ws.length?d/ws.length:1}});
+  const wkComp=L.filter(w=>S.actuals[w.weekStart]&&addD(w.weekStart,6)<=today).map(w=>{const ws=w.workouts.filter(x=>M[x.id]&&!['nodata','future'].includes(M[x.id].st));const d=ws.filter(x=>['done','shifted'].includes(M[x.id].st)).length;return {w:w.weekStart,c:ws.length?d/ws.length:1}});
   let best=0,cur=0;wkComp.forEach(x=>{if(x.c>=.85){cur++;best=Math.max(best,cur)}else cur=0});
   const hero=`<div class="card"><div class="row between"><h2 style="font-size:17px">Season so far</h2><span class="small muted">${Math.round(elapsed/total*100)}% of season · week ${curIdx()+1}/${L.length}</span></div>
    <div class="prog" style="margin:8px 0 12px"><i style="width:${Math.min(100,elapsed/total*100)}%"></i></div>
@@ -715,7 +715,7 @@ function vStats(){
   // heatmap
   let lmh='';
   const heat=`<div></div>${DOW.map((d,i)=>`<div class="dl">${i%2?'':d}</div>`).join('')}`.replace(/<div><\/div>/,'<div class="dl"></div>').replace(/dl"/g,'dl" style="grid-column:1"')+L.map(w=>{const mm=parse(w.weekStart).toLocaleDateString('en-GB',{month:'short'});let cells=`<div class="wl">${mm!==lmh?(lmh=mm):''}</div>`;for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const ws=w.workouts.filter(x=>x.date===d);let col='var(--grid)',t='Rest day';
-      if(d>=today){col=ws.length?'#2a2f3a':'#1b1f27';t=ws.length?'Planned: '+ws.map(x=>x.title).join(', '):'Rest'}
+      if(d>today||(d===today&&!ws.some(x=>['done','shifted'].includes((M[x.id]||{}).st)))){col=ws.length?'#2a2f3a':'#1b1f27';t=ws.length?'Planned: '+ws.map(x=>x.title).join(', '):'Rest'}
       else if(ws.length){const st=ws.map(x=>(M[x.id]||{}).st);if(st.every(s=>s==='nodata')){col='#323845';t='No Garmin data yet'}else{const ok=st.filter(s=>s==='done'||s==='shifted').length;col=ok===ws.length?'var(--good)':ok?'var(--warn)':'var(--crit)';t=`${ok}/${ws.length} done: `+ws.map(x=>x.title).join(', ')}}
       else{col='#1b1f27'}
       cells+=`<div class="c" style="background:${col};${d===today?'outline:2px solid #fff;':''}" data-tip="<b>${fmtD(d)}</b><br>${esc(t)}"></div>`}
@@ -959,7 +959,7 @@ function analyze(){
       finding:`${swPlan?`${swDone} of ${swPlan} planned swims done`:`${swDone} swims`} in 28 days${s?`; pace per 100 m ${mmss(s.start)} → ${mmss(s.end)} (${sgn(-s.pct)} % faster)`:''}.`,
       meaning:'For a beginner, swim progress comes from frequency more than effort: 3 short swims beat 1 long one, because technique is motor learning.',action:swPlan&&swDone/swPlan<0.6?'Book fixed pool slots for the week — treat them like key run sessions.':'Keep 2+ swims a week; add length only when the drills feel smooth.'});}
   // ---------- 7. Consistency
-  const MM=matchAll();const pastK=allWorkouts().filter(x=>x.date<today&&MM[x.id]&&!['nodata','future'].includes(MM[x.id].st));
+  const MM=matchAll();const pastK=allWorkouts().filter(x=>x.date<=today&&MM[x.id]&&!['nodata','future'].includes(MM[x.id].st));
   if(pastK.length>=4){const ok=x=>['done','shifted'].includes(MM[x.id].st);const key=pastK.filter(x=>x.key),miss=pastK.filter(x=>!ok(x));
     const byDay={},byType={};miss.forEach(x=>{const d=DOW[(parse(x.date).getDay()+6)%7];byDay[d]=(byDay[d]||0)+1;byType[x.sport]=(byType[x.sport]||0)+1});
     const topD=Object.entries(byDay).sort((a,b)=>b[1]-a[1])[0],topT=Object.entries(byType).sort((a,b)=>b[1]-a[1])[0];const pc=(pastK.length-miss.length)/pastK.length*100,kp=key.length?key.filter(ok).length/key.length*100:null;
