@@ -205,6 +205,20 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .rprow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 .seg{display:flex;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;flex-shrink:0}.seg button{border:0;background:none;color:var(--muted);font-weight:600;font-size:12.5px;padding:7px 10px;border-radius:8px}
 .seg button.on{background:var(--accent);color:#16142c}.seg button[data-v=busy].on{background:var(--crit);color:#fff}.seg button[data-v=short].on{background:var(--warn);color:#16142c}
+
+.refc{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 10px}.btn.sm{padding:7px 12px;font-size:13px}
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.bt2{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px 8px}.bt2 .bv{font-family:"Bricolage Grotesque";font-weight:800;font-size:24px;line-height:1.1}.bt2 .bv span{font-size:12px;color:var(--muted);font-weight:600;margin-left:2px}
+.rs{position:relative;height:10px;border-radius:5px;margin:8px 0 3px;overflow:visible;background:var(--grid)}.rs i{position:absolute;top:0;bottom:0}.rs i:first-child{border-radius:5px 0 0 5px}.rs i:nth-child(4){border-radius:0 5px 5px 0}
+.rs b,.ib b{position:absolute;top:-4px;width:3px;height:18px;margin-left:-1.5px;background:var(--text);border-radius:2px}
+.ib{position:relative;display:flex;height:20px;border-radius:6px;overflow:visible;margin:8px 0 3px;gap:2px}.ib i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:700;color:#16142c;border-radius:4px}
+.rt{padding:10px 0;border-top:1px solid var(--line)}.rt:first-of-type{border-top:0}.rt .bar{height:6px;border-radius:3px;background:var(--grid);margin:7px 0 4px;overflow:hidden}.rt .bar i{display:block;height:100%;border-radius:3px}
+.bar{height:6px;border-radius:3px;background:var(--grid);overflow:hidden}.bar i{display:block;height:100%;border-radius:3px}
+.ed{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:8px;width:30px;height:30px;font-size:14px}
+.cn{border-top:1px solid var(--line);padding:9px 0}.cn summary{display:flex;gap:10px;list-style:none;cursor:pointer}.cn summary::-webkit-details-marker{display:none}
+.cn summary>i{flex:0 0 9px;height:9px;border-radius:50%;margin-top:6px}.cn .t{font-weight:600;font-size:14px;line-height:1.3;color:var(--text)}.cn .a{font-size:13px;color:var(--accent);margin-top:2px}
+.fd2{font-size:12.5px;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;margin:8px 0 0 19px;font-variant-numeric:tabular-nums}.cn .small.muted{margin-left:19px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.fchips span{font-size:12.5px;background:rgba(198,244,50,.12);color:var(--text);border:1px solid rgba(198,244,50,.35);border-radius:999px;padding:5px 10px}
 </style>
 </head>
 <body>
@@ -338,11 +352,11 @@ function matchAll(){
     const a=S.actuals[w.weekStart]; const acts=a?(a.activities||[]).map((x,i)=>({...x,_i:i})):null; const used=new Set();
     const okS=(p,x)=>{const s=p.sport;if(s==='race')return x.sport==='run'||x.sport==='multisport'||x.sport==='swim';if(s==='brick')return x.sport==='bike'||x.sport==='run';return x.sport===s};
     for(const p of (w.workouts||[]).slice().sort((a,b)=>a.date<b.date?-1:1)){
-      if(p.date>=today){res[p.id]={st:'future'};continue}
+      if(p.date>today||(p.date===today&&!acts)){res[p.id]={st:'future'};continue}
       if(!acts){res[p.id]={st:'nodata'};continue}
       let hit=acts.find(x=>!used.has(x._i)&&x.date===p.date&&okS(p,x)),st='done';
-      if(!hit){hit=acts.find(x=>!used.has(x._i)&&Math.abs(dBetween(p.date,x.date))===1&&okS(p,x));st='shifted'}
-      if(hit){used.add(hit._i);res[p.id]={st,act:hit}}else res[p.id]={st:'missed'};
+      if(!hit&&p.date<today){hit=acts.find(x=>!used.has(x._i)&&Math.abs(dBetween(p.date,x.date))===1&&okS(p,x));st='shifted'}
+      if(hit){used.add(hit._i);res[p.id]={st,act:hit}}else res[p.id]={st:p.date===today?'future':'missed'};
     }
   }
   return res;
@@ -389,13 +403,13 @@ function heroToday(w){
   const day=inWeek?today:w.weekStart;
   const todays=w.workouts.filter(x=>x.date===day);
   const nextW=allWorkouts().filter(x=>x.date>day).sort((a,b)=>a.date<b.date?-1:1)[0];
-  const doneDays=[0,1,2,3,4,5,6].map(i=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);return d<today&&xs.length&&xs.every(x=>['done','shifted'].includes((M[x.id]||{}).st))});
+  const doneDays=[0,1,2,3,4,5,6].map(i=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);return d<=today&&xs.length&&xs.every(x=>['done','shifted'].includes((M[x.id]||{}).st))});
   const label=inWeek?'Today · '+fmtLong(day):'Week of '+fmtD(w.weekStart);
   let body;
   if(!inWeek){body=`<h2>${esc(w.focus)}</h2><div class="lead">${esc(w.note||'')}</div>`}
   else if(todays.length){const x=todays.find(y=>y.key)||todays[0];const first=(x.steps&&x.steps.length)?(x.steps.length>=3?x.steps[1][1]:x.steps[0][1]):x.details;
     body=`<h2>${esc(x.title)}</h2><div class="meta">${x.dur?`<span><b>${x.dur}</b> min</span>`:''}${x.km?`<span><b>${x.km}</b> km</span>`:''}${todays.length>1?`<span>+ ${esc(todays.filter(y=>y!==x).map(y=>y.title).join(', '))}</span>`:''}</div>
-      <div class="lead">${fill(DI(x).summary||first||'')}</div><button class="go" onclick="openWo('${x.id}')">Open session</button>`}
+      ${(M[x.id]||{}).st==='done'?`<div class="lead"><b style="color:var(--good)">✓ Done</b> — ${(()=>{const a=M[x.id].act;return esc([a.km?(+a.km).toFixed(1)+' km':'',a.min?Math.round(a.min)+' min':'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · '))})()}. Nice work.</div>`:`<div class="lead">${fill(DI(x).summary||first||'')}</div>`}<button class="go" onclick="openWo('${x.id}')">Open session</button>`}
   else body=`<h2>Rest day</h2><div class="lead">Recovery is where the training sticks.${nextW?` Next up: <b>${esc(nextW.title)}</b> on ${fmtLong(nextW.date)}.`:''}</div>${nextW?`<button class="go" onclick="openWo('${nextW.id}')">Preview next session</button>`:''}`;
   return `<section class="hero"><div class="sun"></div><div class="when">${label}</div>${body}${ridgeSvg(w,doneDays)}</section>`;
 }
@@ -624,7 +638,7 @@ function raceCard(k,vd){
     <div class="row" style="gap:10px;margin-top:3px"><span class="goal">${r.controlled?'≈ ':gs?'sub-':''}${esc(r.goal)}</span><span class="chip" style="padding:2px 8px">${esc(meta.tag||'')}</span></div>
     ${res}<div class="small muted" style="margin-top:6px">${esc(meta.note||'')}</div>
     ${gauge}${pred&&!r.controlled?`<div class="tiny muted" style="margin-top:4px">Current-fitness prediction <b class="mono" style="color:var(--text)">${pred}</b></div>`:''}
-    <div class="row" style="gap:14px;margin-top:8px">${rw?`<a href="#" class="small" onclick="openWo('${rw.id}');return false">Race plan ›</a>`:''}${hist?`<details style="display:inline"><summary>Target history (${(r.history||[]).length})</summary>${hist}</details>`:''}</div>
+    <div class="row" style="gap:14px;margin-top:8px"><a href="#" class="small" onclick="editTarget('${k}');return false">✎ Change target</a>${rw?`<a href="#" class="small" onclick="openWo('${rw.id}');return false">Race plan ›</a>`:''}${hist?`<details style="display:inline"><summary>Target history (${(r.history||[]).length})</summary>${hist}</details>`:''}</div>
   </div></div></div>`;
 }
 async function toggleMs(id,on){
@@ -860,7 +874,7 @@ function dailyLoads(endD,days){const acts=allActs();const out=[];let est=false;f
 function analyze(){
   const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);const L=Mx[Mx.length-1]||{};
   const acts=allActs();const end=addD(today,-1)<(acts.length?acts[acts.length-1].date:today)?today:addD(today,-1);
-  const C={};const out=[];
+  const C={};const out=[];const NUM={};
   // ---------- 1. Recovery / readiness
   const daily=(L.daily||[]).filter(x=>x&&x.date).sort((a,b)=>a.date<b.date?-1:1);
   const hrvs=daily.filter(x=>x.hrv).map(x=>+x.hrv),rhrs=daily.filter(x=>x.rhr).map(x=>+x.rhr),sls=daily.filter(x=>x.sleepScore).map(x=>+x.sleepScore),slh=daily.filter(x=>x.sleepH).map(x=>+x.sleepH);
@@ -890,7 +904,7 @@ function analyze(){
     const last7=dl.slice(-7).map(x=>x.v),prev7=dl.slice(-14,-7).map(x=>x.v),last28=dl.slice(-28).map(x=>x.v);
     const acute=last7.reduce((s,x)=>s+x,0),chronic=last28.reduce((s,x)=>s+x,0)/4,ratio=chronic?acute/chronic:null,prevA=prev7.reduce((s,x)=>s+x,0);
     const mono=sd(last7)?avg(last7)/sd(last7):null,strain=mono?acute*mono:null;
-    Object.assign(C,{'Load 7 days':r1(acute,0),'Load 28-day weekly avg':r1(chronic,0),'Acute:chronic ratio':r1(ratio,2),'Load vs previous week':prevA?sgn((acute-prevA)/prevA*100,0)+' %':'—','Monotony':r1(mono,2),'Strain':r1(strain,0)});
+    NUM.ratio=ratio;Object.assign(C,{'Load 7 days':r1(acute,0),'Load 28-day weekly avg':r1(chronic,0),'Acute:chronic ratio':r1(ratio,2),'Load vs previous week':prevA?sgn((acute-prevA)/prevA*100,0)+' %':'—','Monotony':r1(mono,2),'Strain':r1(strain,0)});
     if(est)C['Load source']='estimated from HR (TRIMP) where Garmin load missing';
     const v=ratio!=null&&(ratio>1.5||ratio<0.6)||mono>2.2?'act':ratio!=null&&(ratio>1.3||ratio<0.8)||mono>1.8?'watch':'good';
     out.push({area:'Load',verdict:v,title:ratio>1.3?'You are ramping up faster than your body is used to':ratio!=null&&ratio<0.8?'Training load is below what you are built for':'Load is building at a safe rate',
@@ -904,7 +918,7 @@ function analyze(){
   if(recent.length){
     let e=0,m=0,h=0,src='zones';
     recent.forEach(a=>{if(Array.isArray(a.zones)&&a.zones.length===5){e+=a.zones[0]+a.zones[1];m+=a.zones[2];h+=a.zones[3]+a.zones[4]}else if(a.avgHr){src='avg HR';const s=a.min*60;if(a.avgHr<=z2c)e+=s;else if(a.avgHr<LTHR()*0.94)m+=s;else h+=s}});
-    const T=e+m+h;if(T){const pe=e/T*100,pm=m/T*100,ph=h/T*100;Object.assign(C,{'Easy (Z1–2) share 28 d':r1(pe,0)+' %','Moderate (Z3) share':r1(pm,0)+' %','Hard (Z4–5) share':r1(ph,0)+' %','Z2 ceiling used':z2c+' bpm','Intensity source':src});
+    const T=e+m+h;if(T){const pe=e/T*100,pm=m/T*100,ph=h/T*100;NUM.int=[pe,pm,ph];Object.assign(C,{'Easy (Z1–2) share 28 d':r1(pe,0)+' %','Moderate (Z3) share':r1(pm,0)+' %','Hard (Z4–5) share':r1(ph,0)+' %','Z2 ceiling used':z2c+' bpm','Intensity source':src});
       const easyTooHard=acts.filter(a=>a.date>=addD(end,-27)&&a.sport==='run'&&a.avgHr&&a.km&&a.min&&/easy|recovery|base/i.test(a.name||'')&&a.avgHr>z2c);
       const v=pe<65||pm>25?'act':pe<75||pm>15?'watch':'good';
       out.push({area:'Intensity',verdict:v,title:pm>15?'Too much time in the "grey zone"':pe>=75?'Good easy/hard balance':'Easy running is not easy enough',
@@ -914,7 +928,7 @@ function analyze(){
   }
   // ---------- 4. Aerobic engine (EF + decoupling)
   const ef=acts.filter(a=>a.sport==='run'&&a.avgHr&&a.km>=5&&a.min&&a.avgHr<=LTHR()*0.92&&a.date>=addD(end,-48)).map(a=>({d:a.date,v:(a.km*1000/a.min)/a.avgHr}));
-  if(ef.length>=3){const s=slopePct(ef);C['Efficiency factor now']=r1(s.end,3);C['EF change']=sgn(s.pct)+' % over '+Math.round(s.days)+' d';
+  if(ef.length>=3){const s=slopePct(ef);NUM.ef=ef;NUM.efPct=s.pct;C['Efficiency factor now']=r1(s.end,3);C['EF change']=sgn(s.pct)+' % over '+Math.round(s.days)+' d';
     const dc=acts.filter(a=>a.decoupling!=null).slice(-3);if(dc.length)C['Last long-run decoupling']=dc.map(a=>fmtD(a.date)+' '+r1(a.decoupling)+' %').join(', ');
     const v=s.pct>=1?'good':s.pct>-2?'watch':'act';
     out.push({area:'Aerobic engine',verdict:v,title:s.pct>=1?'You run faster at the same heart rate':s.pct>-2?'Aerobic efficiency is flat':'Aerobic efficiency is slipping',
@@ -954,7 +968,7 @@ function analyze(){
     out.push({area:'Consistency',verdict:v,title:pc>=85?'Consistency is your strongest asset right now':'Missed sessions are costing fitness',
       finding:`${r1(pc,0)} % of sessions done${kp!=null?`, ${r1(kp,0)} % of key sessions`:''}${miss.length&&topD?`; most misses on ${topD[0]} (${topD[1]}) and in ${SP[topT[0]]?SP[topT[0]][0]:topT[0]} (${topT[1]})`:''}.`,
       meaning:'Fitness comes from stacking normal weeks — 90 % of a sensible plan beats 100 % of a perfect one done in bursts.',action:miss.length&&topD?`Look at ${topD[0]}s: if that day is always busy, ask the coach to move that session in Review.`:'Keep it up.'});}
-  return {out,C,rd,ro};
+  return {out,C,rd,ro,NUM};
 }
 
 // ---------- refresh button
@@ -974,34 +988,116 @@ async function forceRefresh(btn){
   render();
 }
 function refreshCard(){const r=refreshState();
-  return `<div class="card refcard"><div class="row between" style="gap:10px;align-items:center"><div><h2 style="font-size:17px">Insights</h2><div class="small muted" id="refMsg" style="margin-top:3px">${esc(r.t)}</div></div>
-   <button class="btn p" style="white-space:nowrap" onclick="forceRefresh(this)">${r.s==='running'?'<span class="spin"></span>Updating':'Update from Garmin'}</button></div>
-   <div class="tiny muted" style="margin-top:8px">Opens your Garmin-check task in Claude — tap <b>Run now</b> there. Takes 5–15 min; your PC must be on with the Claude app open.</div></div>`;}
+  return `<div class="refc"><div class="tiny muted" id="refMsg">${esc(r.s==='idle'?r.t.replace(' · automatic every Sunday 19:00',''):r.t)}</div><button class="btn p sm" onclick="forceRefresh(this)">${r.s==='running'?'<span class="spin"></span>Updating':'↻ Update'}</button></div>`;}
 
 // ---------- view
 const VCOL={good:'var(--good)',watch:'var(--warn)',act:'var(--crit)',green:'var(--good)',amber:'var(--warn)',red:'var(--crit)',ahead:'var(--good)','on track':'var(--good)',behind:'var(--warn)',unlikely:'var(--crit)'};
 const VLBL={good:'Good',watch:'Watch',act:'Act'};
 function insCard(x){return `<div class="ins" style="border-left-color:${VCOL[x.verdict]||'var(--line)'}"><div class="row between" style="gap:8px"><span class="tiny muted">${esc(x.area)}</span><span class="vtag" style="color:${VCOL[x.verdict]}">${VLBL[x.verdict]||esc(x.verdict||'')}</span></div>
   <h3>${esc(x.title)}</h3><div class="fd">${esc(x.finding||'')}</div>${x.meaning?`<p>${esc(x.meaning)}</p>`:''}${x.action?`<div class="act"><b>Do:</b> ${esc(x.action)}</div>`:''}</div>`}
+// ---------- small visuals
+function spark(pts,{col='var(--accent)',band=null,h=44,w=150,dots=false}={}){
+  pts=pts.filter(p=>p.v!=null&&!isNaN(p.v));if(pts.length<2)return `<div class="tiny muted" style="height:${h}px;display:flex;align-items:center">not enough data yet</div>`;
+  let vs=pts.map(p=>+p.v);if(band)vs=vs.concat(band);let mn=Math.min(...vs),mx=Math.max(...vs);if(mn===mx){mn--;mx++}const pd=(mx-mn)*.12;mn-=pd;mx+=pd;
+  const X=i=>2+i/(pts.length-1)*(w-6),Y=v=>3+(1-(v-mn)/(mx-mn))*(h-6);
+  let g=band?`<rect x="0" y="${Y(band[1])}" width="${w}" height="${Math.max(1,Y(band[0])-Y(band[1]))}" fill="${col}" opacity=".13" rx="3"/>`:'';
+  g+=`<polyline points="${pts.map((p,i)=>X(i)+','+Y(p.v)).join(' ')}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if(dots)g+=pts.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.v)}" r="1.8" fill="${col}"/>`).join('');
+  g+=`<circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1].v)}" r="3.5" fill="${col}" stroke="var(--card)" stroke-width="2"/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">${g}</svg>`;
+}
+function bodyTile(lbl,val,unit,delta,good,chart){
+  const c=good==null?'var(--muted)':good?'var(--good)':'var(--warn)';
+  return `<div class="bt2"><div class="tiny muted">${lbl}</div><div class="bv">${val??'—'}<span>${unit}</span></div><div class="tiny" style="color:${c};min-height:15px">${delta||''}</div>${chart}</div>`;
+}
+function ratioScale(r){
+  if(r==null)return '';const p=v=>Math.max(0,Math.min(100,v/2*100));
+  const lab=r<0.8?'Rebuilding — below your usual load':r<=1.3?'Sweet spot — productive and safe':r<=1.5?'Ramping fast — hold here':'Too fast — injury risk';
+  const col=r<0.8?'#7fb4f0':r<=1.3?'var(--good)':r<=1.5?'var(--warn)':'var(--crit)';
+  return `<div class="row between"><b>Training load</b><span class="mono" style="color:${col}">${r1(r,2)}</span></div>
+   <div class="rs"><i style="left:0;width:40%;background:#7fb4f055"></i><i style="left:40%;width:25%;background:#22c55e66"></i><i style="left:65%;width:10%;background:#eab30866"></i><i style="left:75%;width:25%;background:#ef444455"></i><b style="left:${p(r)}%"></b></div>
+   <div class="row between tiny muted"><span>0</span><span>0.8</span><span>1.3</span><span>1.5</span><span>2.0</span></div><div class="small" style="color:${col};margin-top:2px">${lab}</div>`;
+}
+function intBar(a){
+  if(!a)return '';const [e,m,h]=a;
+  return `<div class="row between" style="margin-top:14px"><b>Easy / moderate / hard</b><span class="tiny muted">last 4 weeks · target 80 / 5 / 15</span></div>
+   <div class="ib"><i style="width:${e}%;background:var(--good)">${e>=12?Math.round(e)+'%':''}</i><i style="width:${m}%;background:var(--warn)">${m>=12?Math.round(m)+'%':''}</i><i style="width:${h}%;background:var(--crit)">${h>=12?Math.round(h)+'%':''}</i><b style="left:80%"></b></div>
+   <div class="small" style="margin-top:2px;color:${m>15?'var(--warn)':'var(--sub)'}">${m>15?'Too much grey-zone running':e>=70?'Mostly easy — good balance':'Easy runs need to be slower'}</div>`;
+}
+const VDOT_DOT={ahead:'var(--good)','on track':'var(--good)',behind:'var(--warn)',ambitious:'var(--warn)',unlikely:'var(--crit)'};
 function vGarmin(){
-  const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);const L=Mx[Mx.length-1]||{};const A=L.analysis||null;
-  const E=analyze();const rd=A&&A.readiness||E.rd;
-  const gauge=rd?`<div class="insg"><svg viewBox="0 0 120 70" width="120"><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="var(--grid)" stroke-width="10" stroke-linecap="round"/><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="${VCOL[rd.verdict]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${157*(rd.score||0)/100} 157"/><text x="60" y="58" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="24" fill="var(--text)">${rd.score??'—'}</text></svg>
-    <div><div class="tiny muted">Readiness</div><div style="font-weight:700;color:${VCOL[rd.verdict]}">${{green:'Ready to train',amber:'Train, but carefully',red:'Back off'}[rd.verdict]||''}</div>${rd.why?`<div class="small muted" style="margin-top:3px">${esc(rd.why)}</div>`:''}</div></div>`:'';
-  const head=A&&A.headline||L.comment;
-  const coach=A&&(A.sections||[]).length?`<h2 class="sec">Coach's analysis <span class="tiny muted">${esc((L.syncedAt||'').slice(0,10))}</span></h2>${A.sections.map(insCard).join('')}`:'';
-  const focus=A&&(A.focus||[]).length?`<div class="card"><h3 style="font-size:14.5px">Focus for the coming week</h3><ul class="fl">${A.focus.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`:'';
-  const ro=(A&&A.raceOutlook&&A.raceOutlook.length?A.raceOutlook.map(x=>({...x,name:(RT()[x.race]||{}).name||x.race})):E.ro);
-  const roH=ro.length?`<div class="card"><h3 style="font-size:14.5px;margin-bottom:6px">Race outlook</h3>${ro.map(x=>{const pctv=x.vdotNeeded?Math.min(100,x.vdotNow/x.vdotNeeded*100):0;return `<div class="ro"><div class="row between"><b>${esc(x.name)} · ${esc(x.target)}</b><span class="vtag" style="color:${VCOL[x.verdict]}">${esc(x.verdict)}</span></div>
-     <div class="bar"><i style="width:${pctv}%;background:${VCOL[x.verdict]}"></i></div><div class="tiny muted">Today's fitness: ${esc(x.predicted||'—')} · VDOT ${r1(x.vdotNow)} of ${r1(x.vdotNeeded)} needed · ${x.weeksLeft} weeks left</div><div class="small" style="margin-top:4px">${esc(x.reasoning||'')}</div></div>`}).join('')}</div>`:'';
-  const calc={...E.C,...(A&&A.calc||{})};
-  const maths=Object.keys(calc).length?`<details class="card"><summary style="font-weight:600">Show the maths</summary><div class="kv" style="margin-top:8px">${Object.entries(calc).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div>
-    <div class="tiny muted" style="margin-top:8px">Readiness: HRV z-score uses log HRV vs your 28-day baseline. Load ratio = last 7 days ÷ 28-day weekly average (Garmin load, or HR-based TRIMP when missing). Monotony = mean ÷ SD of daily load. Efficiency factor = metres per minute ÷ avg HR on easy runs. VDOT from Daniels' formula.</div></details>`:'';
-  const T=(l,v,u)=>`<div class="tile"><div class="v">${v??'—'}<span class="small muted">${u}</span></div><div class="l">${l}</div></div>`;
-  const raw=Mx.length?`<details class="card"><summary style="font-weight:600">Raw Garmin numbers</summary><div class="tiles" style="margin-top:10px">${T('VO₂max',L.vo2max,'')}${T('HRV 7-night',L.hrvAvg,' ms')}${T('Resting HR',L.rhr,' bpm')}${T('Sleep score',L.sleepScore,'')}${T('Acute:chronic',L.acwr!=null?(+L.acwr).toFixed(2):null,'')}${T('Run km (week)',L.runKm!=null?Math.round(L.runKm):null,'')}</div>${L.hrvStatus||L.trainingStatus?`<div class="note">HRV: <b>${esc(L.hrvStatus||'—')}</b> · Training status: <b>${esc(L.trainingStatus||'—')}</b></div>`:''}</details>`:'';
-  const autoB=E.out.length?E.out.map(insCard).join(''):'<div class="card empty">The analysis appears after the first Garmin sync (Sunday 19:00, or tap Update from Garmin).</div>';
-  const auto=A?`<details class="card"><summary style="font-weight:600">Live checks from your synced data</summary><div class="tiny muted" style="margin:6px 0">Recalculated in the app every time new data arrives.</div>${autoB}</details>`:`<h2 class="sec">Analysis</h2>${autoB}`;
-  return `${refreshCard()}${head||gauge?`<div class="card insh">${gauge}${head?`<div class="hl">${esc(head)}</div>`:''}</div>`:''}${focus}${coach}${roH}${auto}${maths}${raw}${pacesCard()}`;
+  const Mx=Object.values(S.metrics).sort((a,b)=>a.weekStart<b.weekStart?-1:1);const L=Mx[Mx.length-1]||{};const A=L.analysis||null;const E=analyze();
+  const rd=A&&A.readiness||E.rd;const calc={...E.C,...(A&&A.calc||{})};
+  const daily=(L.daily||[]).filter(x=>x&&x.date).sort((a,b)=>a.date<b.date?-1:1);
+  const ser=k=>daily.map(x=>({d:x.date,v:x[k]}));const vals=k=>daily.map(x=>x[k]).filter(v=>v!=null).map(Number);
+  const m7=k=>avg(vals(k).slice(-7)),m28=k=>avg(vals(k));
+  // hero
+  const hero=rd?`<div class="card insh"><div class="insg"><svg viewBox="0 0 120 70" width="112"><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="var(--grid)" stroke-width="10" stroke-linecap="round"/><path d="M10 62a50 50 0 0 1 100 0" fill="none" stroke="${VCOL[rd.verdict]}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${157*(rd.score||0)/100} 157"/><text x="60" y="58" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="25" fill="var(--text)">${rd.score??'—'}</text></svg>
+     <div><div class="tiny muted">Readiness</div><div style="font-weight:800;font-size:17px;color:${VCOL[rd.verdict]}">${{green:'Ready to train',amber:'Train, but carefully',red:'Back off today'}[rd.verdict]||''}</div>${A&&A.headline?`<div class="small" style="margin-top:4px">${esc(A.headline)}</div>`:''}</div></div>
+     ${rd.why?`<details><summary class="tiny muted">Why</summary><div class="small muted" style="margin-top:4px">${esc(rd.why)}</div></details>`:''}</div>`:'';
+  // body tiles
+  let body='';
+  if(daily.length>=7){const h7=m7('hrv'),h28=m28('hrv'),hs=sd(vals('hrv'))||0,r7=m7('rhr'),r28=m28('rhr'),s7=m7('sleepScore'),s28=m28('sleepScore');
+    const vo=(L.vo2History||[]).map(x=>({d:x.date,v:x.v}));const vd=vo.length>1?vo[vo.length-1].v-vo[0].v:null;
+    body=`<div class="bgrid">${bodyTile('HRV · 7 nights',r1(h7,0),' ms',`${sgn((h7-h28)/h28*100,0)} % vs normal`,h7>=h28-hs*0.5,spark(ser('hrv'),{col:'var(--swim)',band:[h28-hs,h28+hs]}))}
+      ${bodyTile('Resting HR',r1(r7,0),' bpm',`${sgn(r7-r28)} vs normal`,r7<=r28+1,spark(ser('rhr'),{col:'var(--run)'}))}
+      ${bodyTile('Sleep score',r1(s7,0),'',`${sgn(s7-s28,0)} vs normal · ${r1(m7('sleepH'))} h`,s7>=s28-3,spark(ser('sleepScore'),{col:'var(--strength)'}))}
+      ${bodyTile('VO₂max',L.vo2max??'—','',vd!=null?`${sgn(vd)} in ${Math.round(dBetween(vo[0].d,vo[vo.length-1].d)/7)} wk`:'',vd==null?null:vd>=0,spark(vo,{col:'var(--bike)',dots:true}))}</div>`}
+  // training
+  const ratio=L.acwr!=null?+L.acwr:E.NUM.ratio;
+  const intA=calc.intensity_4wk_z12_pct!=null?[+calc.intensity_4wk_z12_pct,+calc.intensity_4wk_z3_pct,+calc.intensity_4wk_z45_pct]:E.NUM.int;
+  const efv=Array.isArray(calc.ef_values)?calc.ef_values.map((v,i)=>({d:addD(today,i-calc.ef_values.length),v})):(E.NUM.ef||[]);
+  const efp=calc.ef_change_pct!=null?+calc.ef_change_pct:E.NUM.efPct;
+  const train=(ratio!=null||intA||efv.length>1)?`<div class="card">${ratioScale(ratio)}${intBar(intA)}
+    ${efv.length>1?`<div class="row between" style="margin-top:14px"><b>Aerobic efficiency</b><span class="mono" style="color:${efp>=1?'var(--good)':efp>-2?'var(--sub)':'var(--warn)'}">${sgn(efp)} %</span></div>${spark(efv,{col:'var(--run)',h:40,dots:true})}<div class="small" style="color:var(--sub)">${efp>=1?'Faster at the same heart rate — the base is growing':efp>-2?'Flat — normal after the marathon':'Slipping — check recovery'}</div>`:''}</div>`:'';
+  // races
+  const ro=(A&&A.raceOutlook&&A.raceOutlook.length?A.raceOutlook:E.ro).filter(x=>x.vdotNeeded||x.race==='trakai');
+  const races=`<div class="card"><div class="row between"><b>Race targets</b><span class="tiny muted">tap ✎ to change</span></div>${RACE_ORDER.map(k=>{const r=RT()[k];if(!r)return '';let x=ro.find(y=>y.race===k)||{};const dd=dBetween(today,r.date);
+      const gs=toSec(r.goal);const now=+x.vdotNow||paces().vd;const need=gs&&r.dist?vdotFrom(r.dist,gs):null;const wl=Math.max(1,dd/7);
+      const per=need?(need-now)/wl:null;const pct=need?Math.min(100,now/need*100):null;
+      if(need&&dd>=0)x={...x,verdict:per<=0?'ahead':per<=0.15?'on track':per<=0.25?'ambitious':'unlikely'};
+      return `<div class="rt"><div class="row between"><div><b>${esc(r.name)}</b> <span class="tiny muted">${dd>=0?dd+' d':'done'}</span></div><div class="row" style="gap:8px"><span class="goal" style="font-size:15px">${esc(r.goal)}</span><button class="ed" onclick="editTarget('${k}')" aria-label="Change ${esc(r.name)} target">✎</button></div></div>
+        ${pct!=null?`<div class="bar"><i style="width:${pct}%;background:${VDOT_DOT[x.verdict]||'var(--accent)'}"></i></div><div class="row between tiny"><span style="color:${VDOT_DOT[x.verdict]||'var(--sub)'}">● ${esc(x.verdict||'')}</span><span class="muted">${per!=null&&per>0?`needs +${r1(per,2)} VDOT/wk`:'fitness already there'}</span></div>`:x.verdict?`<div class="tiny" style="color:${VDOT_DOT[x.verdict]}">● ${esc(x.verdict)}</div>`:''}</div>`}).join('')}</div>`;
+  // coach notes
+  const secs=A&&(A.sections||[]).length?A.sections:E.out;
+  const notes=secs.length?`<div class="card"><b>Coach notes</b>${secs.map(x=>`<details class="cn"><summary><i style="background:${VCOL[x.verdict]}"></i><div><div class="t">${esc(x.title)}</div>${x.action?`<div class="a">${esc(x.action)}</div>`:''}</div></summary><div class="fd2">${esc(x.finding||'')}</div>${x.meaning?`<div class="small muted" style="margin-top:6px">${esc(x.meaning)}</div>`:''}</details>`).join('')}</div>`:'';
+  const focus=A&&(A.focus||[]).length?`<div class="fchips">${A.focus.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:'';
+  const maths=Object.keys(calc).length?`<details class="card"><summary style="font-weight:600">Show the maths</summary><div class="kv" style="margin-top:8px">${Object.entries(calc).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div></details>`:'';
+  const empty=!Mx.length?`<div class="card empty">Insights appear after the first Garmin sync.</div>`:'';
+  return `${refreshCard()}${empty}${hero}${focus}${body}${train}${races}${notes}${maths}<details class="card"><summary style="font-weight:600">Training paces</summary>${pacesCard()}</details>`;
+}
+// ---------- change a race target
+function editTarget(k){
+  const r=RT()[k];if(!r)return;const isTime=!!toSec(r.goal)&&r.dist;
+  document.getElementById('sheetIn').innerHTML=`<h2>${esc(r.name)}</h2><div class="small muted" style="margin-top:2px">${fmtLong(r.date)} · now <b class="mono">${esc(r.goal)}</b></div>
+    <label class="small" style="display:block;margin-top:14px">New target ${isTime?'(h:mm:ss or mm:ss)':''}</label>
+    <input id="tgIn" value="${esc(r.goal)}" ${isTime?'inputmode="numeric"':''} oninput="tgPrev('${k}')" style="width:100%;margin-top:6px;font-size:22px;font-family:'Bricolage Grotesque';font-weight:800;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)">
+    <div id="tgPv" style="margin-top:12px"></div>
+    <input id="tgWhy" placeholder="Why? (optional, e.g. felt strong in the 10K)" style="width:100%;margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)">
+    <div class="row" style="margin-top:12px;gap:8px"><button class="btn p" onclick="tgSave('${k}')">Save target</button><span id="tgMsg" class="small"></span></div>
+    <div class="tiny muted" style="margin-top:8px">Goal paces in your workouts update straight away. The Sunday check will keep judging the target on your data.</div>`;
+  document.getElementById('ov').classList.add('on');const sh=document.getElementById('sheet');sh.classList.add('on');sh.scrollTop=0;tgPrev(k);
+}
+function tgPrev(k){
+  const r=RT()[k];const v=document.getElementById('tgIn').value.trim();const pv=document.getElementById('tgPv');const t=toSec(v);
+  if(!r.dist||!toSec(r.goal)){pv.innerHTML='';return}
+  if(!t){pv.innerHTML='<div class="err">Use a time like 44:30 or 1:37:00.</div>';return}
+  const vNow=paces().vd;const need=vdotFrom(r.dist,t);const wk=Math.max(1,dBetween(today,r.date)/7);const per=(need-vNow)/wk;const pace=mmss(t/(r.dist/1000));
+  const verdict=need<=vNow?['Already within your fitness','var(--good)']:per<=0.15?['Realistic with consistent training','var(--good)']:per<=0.25?['Ambitious — needs a near-perfect block','var(--warn)']:['Very unlikely in the time left','var(--crit)'];
+  const pct=Math.min(100,vNow/need*100);
+  pv.innerHTML=`<div class="tiles"><div class="tile"><div class="v" style="font-size:18px">${pace}</div><div class="l">per km</div></div><div class="tile"><div class="v" style="font-size:18px">${r1(need)}</div><div class="l">VDOT needed</div></div><div class="tile"><div class="v" style="font-size:18px">${per>0?'+'+r1(per,2):'0'}</div><div class="l">VDOT / week</div></div></div>
+    <div class="bar" style="margin-top:10px"><i style="width:${pct}%;background:${verdict[1]}"></i></div><div class="small" style="color:${verdict[1]};margin-top:4px">● ${verdict[0]}</div><div class="tiny muted">Your VDOT now ${r1(vNow)} · ${Math.round(wk)} weeks to go · realistic gain 0.1–0.2 per week</div>`;
+}
+async function tgSave(k){
+  const m=document.getElementById('tgMsg');const v=document.getElementById('tgIn').value.trim();const r=RT()[k];
+  if(!v)return;if(r.dist&&toSec(r.goal)&&!toSec(v)){m.innerHTML='<span class="err">Use a time like 44:30.</span>';return}
+  if(v===r.goal){closeSheet();return}
+  try{const st=JSON.parse(JSON.stringify(S.settings||{}));const t=st.raceTargets[k];t.goal=v;t.history=[...(t.history||[]),{at:today,goal:v,reason:document.getElementById('tgWhy').value.trim()||'Changed by Tomas in the app'}];
+    if(st.goals){const g={mazeikiai:'10KG',riga:'HMG',tallinn:'MPG'}[k];if(g)delete st.goals[g]}
+    const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,updatedAt:new Date().toISOString()});
+    await S.db.collection('notes').add({text:`Target changed: ${r.name} ${r.goal} → ${v}.`,createdAt:new Date().toISOString(),status:'open'});
+    closeSheet();render();
+  }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`}
 }
 
 // ================================================================== install / upgrade
