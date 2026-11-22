@@ -219,6 +219,24 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .cn summary>i{flex:0 0 9px;height:9px;border-radius:50%;margin-top:6px}.cn .t{font-weight:600;font-size:14px;line-height:1.3;color:var(--text)}.cn .a{font-size:13px;color:var(--accent);margin-top:2px}
 .fd2{font-size:12.5px;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px;margin:8px 0 0 19px;font-variant-numeric:tabular-nums}.cn .small.muted{margin-left:19px}
 .fchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.fchips span{font-size:12.5px;background:rgba(198,244,50,.12);color:var(--text);border:1px solid rgba(198,244,50,.35);border-radius:999px;padding:5px 10px}
+
+.hero{padding:20px 20px 18px;background:radial-gradient(120% 90% at 100% 0%,#5b3fa0 0%,rgba(91,63,160,0) 55%),linear-gradient(165deg,#3b2b6e 0%,#251d4d 55%,#171433 100%)}
+.hv{display:flex;align-items:center;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)}
+.ring{width:118px;height:118px;flex-shrink:0;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))}
+.hcol{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.hs .hl{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#b9b0de}.hs .hl b{font-family:"Bricolage Grotesque";font-size:18px;color:#fff;font-weight:800}.hs .hl small{font-size:12px;color:#b9b0de;font-weight:600}
+.hb{height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:4px;overflow:hidden}.hb i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.hx{font-size:11.5px;color:#b9b0de;margin-top:2px}
+.motto{margin-top:14px;font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;color:#f1edff;line-height:1.3}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:pl 1.8s ease-in-out infinite}@keyframes pl{50%{stroke-opacity:.45}}}
+.cl{font-size:14px;line-height:1.35}.cl .mv{color:var(--accent);font-weight:600}.cl .rm{color:var(--crit);font-weight:600}
+.why1{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.why1.open{white-space:normal}
+.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}.clamp.open{-webkit-line-clamp:unset;display:block}
+.chg{align-items:start;padding:10px 12px}
+
+.mw{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:12px 0 4px}.mw>div{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-height:62px}
+.mw>div.chd{border-color:var(--accent);background:rgba(198,244,50,.08)}.mw>div.past{opacity:.45}.mw span{font-size:11px;color:var(--muted)}
+.mw i{width:20px;height:20px;border-radius:7px;font-style:normal;font-size:10.5px;font-weight:800;color:#16142c;display:flex;align-items:center;justify-content:center}.mw em{color:var(--muted);font-style:normal;line-height:20px}
 </style>
 </head>
 <body>
@@ -387,6 +405,42 @@ const ICON={
  strength:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
  brick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><path d="M6 17l3-6h4M14 5l3 3-3 3M17 8H10"/><circle cx="18" cy="18" r="1.5"/></svg>',
  race:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>'};
+function streakCount(){
+  const xs=allWorkouts().filter(x=>x.date<=today).sort((a,b)=>a.date<b.date?1:-1);let n=0;
+  for(const x of xs){const s=(M[x.id]||{}).st;if(s==='future'||s==='nodata')continue;if(s==='done'||s==='shifted')n++;else break}
+  return n;
+}
+function weekRing(w){
+  const xs=(w.workouts||[]).slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);const N=xs.length||1;
+  const R=50,C=2*Math.PI*R,gap=xs.length>1?7:0,seg=C/N-gap;let off=0;
+  const arcs=xs.map(x=>{const st=(M[x.id]||{}).st;const col=(SP[x.sport]||['','#888'])[1];
+    const done=st==='done'||st==='shifted',miss=st==='missed',tod=x.date===today&&!done;
+    const a=`<circle cx="60" cy="60" r="${R}" fill="none" stroke="${miss?'var(--crit)':col}" stroke-opacity="${done?1:miss?.45:tod?.95:.22}" stroke-width="${tod?13:11}" stroke-linecap="round" stroke-dasharray="${Math.max(1,seg)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"${tod?' class="pulse"':''}/>`;off+=seg+gap;return a}).join('');
+  const done=xs.filter(x=>['done','shifted'].includes((M[x.id]||{}).st)).length;
+  return {svg:`<svg viewBox="0 0 120 120" class="ring" aria-label="${done} of ${xs.length} sessions done this week">${arcs}<text x="60" y="62" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="30" fill="#fff">${done}<tspan font-size="17" fill="#b9b0de">/${xs.length}</tspan></text><text x="60" y="80" text-anchor="middle" font-size="9.5" fill="#b9b0de" font-family="Figtree">done</text></svg>`,done,total:xs.length};
+}
+function heroStats(w){
+  const a=S.actuals[w.weekStart];const plan=(w.workouts||[]).filter(x=>x.sport==='run'||x.sport==='race'&&x.km).reduce((s,x)=>s+estKm(x),0);
+  const did=a&&a.summary?+a.summary.runKm||0:0;const st=streakCount();
+  const nr=nextRace();let rr='';
+  if(nr){const gs=toSec(nr.goal);const need=gs&&nr.dist?vdotFrom(nr.dist,gs):null;const pct=need?Math.min(100,paces().vd/need*100):null;
+    rr=`<div class="hs"><div class="hl"><span>${esc(nr.name.split(' ')[0])}</span><b>${dBetween(today,nr.date)} d</b></div>${pct!=null?`<div class="hb"><i style="width:${pct}%"></i></div><div class="hx">fitness ${Math.round(pct)} % of ${esc(nr.goal)}</div>`:`<div class="hx">${esc(nr.goal)}</div>`}</div>`}
+  return `${plan?`<div class="hs"><div class="hl"><span>Run km</span><b>${Math.round(did)}<small>/${Math.round(plan)}</small></b></div><div class="hb"><i style="width:${plan?Math.min(100,did/plan*100):0}%;background:var(--run)"></i></div></div>`:''}
+    <div class="hs"><div class="hl"><span>Streak</span><b>${st}<small> in a row</small></b></div><div class="hx">${st>=10?'Unstoppable':st>=5?'Building a habit':st?'Keep it going':'Start today'}</div></div>${rr}`;
+}
+function motto(w,ring){
+  if(w.weekStart>mondayOf(today))return `${ring.total} sessions ahead. One at a time.`;
+  if(addD(w.weekStart,6)<today)return ring.total&&ring.done===ring.total?'Every session done that week.':`${ring.done} of ${ring.total} done that week.`;
+  const todays=w.workouts.filter(x=>x.date===today);const tDone=todays.length&&todays.every(x=>['done','shifted'].includes((M[x.id]||{}).st));
+  const missed=w.workouts.some(x=>(M[x.id]||{}).st==='missed');
+  if(ring.total&&ring.done===ring.total)return 'Whole week done. That is how fitness is built.';
+  if(tDone)return 'Today is done. Recover well — tomorrow builds on it.';
+  if(todays.length)return 'One session today. Do it well, then rest.';
+  if(missed)return 'Missed one? No cramming — just nail the next one.';
+  return 'Rest day. This is when the training turns into fitness.';
+}
+function heroViz(w){const r=weekRing(w);return `<div class="hv">${r.svg}<div class="hcol">${heroStats(w)}</div></div><div class="motto">${motto(w,r)}</div>`}
+
 function ridgeSvg(w,doneDays){
   const L=7,W=360,H=86;const ws=[];for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);ws.push(xs.reduce((s,x)=>s+(x.key?2:1)+(x.sport==='race'?3:0),0))}
   let acc=0;const ys=ws.map(v=>{acc+=v+.6;return acc});const mx=ys[6]||1;
@@ -411,7 +465,7 @@ function heroToday(w){
     body=`<h2>${esc(x.title)}</h2><div class="meta">${x.dur?`<span><b>${x.dur}</b> min</span>`:''}${x.km?`<span><b>${x.km}</b> km</span>`:''}${todays.length>1?`<span>+ ${esc(todays.filter(y=>y!==x).map(y=>y.title).join(', '))}</span>`:''}</div>
       ${(M[x.id]||{}).st==='done'?`<div class="lead"><b style="color:var(--good)">✓ Done</b> — ${(()=>{const a=M[x.id].act;return esc([a.km?(+a.km).toFixed(1)+' km':'',a.min?Math.round(a.min)+' min':'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · '))})()}. Nice work.</div>`:`<div class="lead">${fill(DI(x).summary||first||'')}</div>`}<button class="go" onclick="openWo('${x.id}')">Open session</button>`}
   else body=`<h2>Rest day</h2><div class="lead">Recovery is where the training sticks.${nextW?` Next up: <b>${esc(nextW.title)}</b> on ${fmtLong(nextW.date)}.`:''}</div>${nextW?`<button class="go" onclick="openWo('${nextW.id}')">Preview next session</button>`:''}`;
-  return `<section class="hero"><div class="sun"></div><div class="when">${label}</div>${body}${ridgeSvg(w,doneDays)}</section>`;
+  return `<section class="hero"><div class="when">${label}</div>${body}${heroViz(w)}</section>`;
 }
 function weekStrip(w){
   let h='';for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);
@@ -496,7 +550,7 @@ function replanWeek(w,st){
   if(best)mov.forEach((x,i)=>{const d=best[i];
     if(d==null){changes.push({cid:cid(),type:'remove',date:x.date,workoutId:x.id,before:x,why:'No good slot left — skipping beats cramming.'});return}
     const sh=st[d]==='short'&&long(x);
-    if(d!==x.date)changes.push({cid:cid(),type:'move',date:x.date,newDate:d,workoutId:x.id,before:x,...(sh?{after:shortAfter(x)}:{}),why:st[x.date]==='busy'||st[x.date]==='short'?`${dow(x.date)} ${st[x.date]} → ${dow(d)}.${sh?` Cut to ${SHORT_MIN} min.`:''}`:isRun(x)?`Keeps runs on separate days.`:`Makes room so runs don't stack.`});
+    if(d!==x.date)changes.push({cid:cid(),type:'move',date:x.date,newDate:d,workoutId:x.id,before:x,...(sh?{after:shortAfter(x)}:{}),why:st[x.date]==='busy'||st[x.date]==='short'?(sh?`Cut to ${SHORT_MIN} min.`:''):isRun(x)?`Keeps runs on separate days.`:`Makes room so runs don't stack.`});
     else if(sh)changes.push({cid:cid(),type:'replace',date:x.date,workoutId:x.id,before:x,after:shortAfter(x),why:`Short day → ${SHORT_MIN} min.`});
   });
   const nm=x=>x.title.split(/ — | \+ | \(/)[0].toLowerCase();
@@ -791,14 +845,40 @@ function describeChange(c){
     default:return {h:'Change · '+day(c.date),b:woLine(c.before),a:woLine(c.after)};
   }
 }
+function chgLine(c){
+  const day=d=>d?DOW[(parse(d).getDay()+6)%7]:'';const t=x=>esc((x&&x.title||'').split(/ — | \(/)[0]);
+  const diff=(b,a)=>{const out=[];if(!b||!a)return out;if(b.dur!==a.dur&&a.dur)out.push(`${b.dur||'—'}' → ${a.dur}'`);if(a.km&&b.km!==a.km)out.push(`${b.km||'—'} → ${a.km} km`);
+    if(a.title&&a.title!==b.title&&!out.length)out.push(esc(a.title));if(!out.length)out.push('workout adjusted');return out};
+  switch(c.type){
+    case 'move':return `<b>${t(c.before)}</b> <span class="mv">${day(c.date)} → ${day(c.newDate)}</span>${c.after?` <span class="muted">· ${diff(c.before,c.after).join(' · ')}</span>`:''}`;
+    case 'remove':return `<b>${t(c.before)}</b> <span class="rm">${day(c.date)} · removed</span>`;
+    case 'add':return `<b>+ ${t(c.after)}</b> <span class="mv">${day(c.date)}</span>`;
+    case 'replace':return `<b>${t(c.before)}</b> <span class="muted">${day(c.date)}</span> <span class="mv">${diff(c.before,c.after).join(' · ')}</span>`;
+    case 'settings':{const d=describeChange(c);return `<b>${d.h}</b> <span class="mv">${d.b} → ${d.a}</span>`}
+    case 'target':{const r=RT()[c.race]||{};return `<b>${esc(r.name||c.race)}</b> <span class="mv">${esc(r.goal||'—')} → ${esc(c.goal)}</span>`}
+    case 'milestone':return `<b>Milestone</b> <span class="mv">${esc((c.milestone||{}).label||'')}</span>`;
+  }
+  return '';
+}
+function miniWeek(s){
+  const ws=s.forWeek&&S.weeks[s.forWeek];if(!ws||!(s.changes||[]).some(c=>['move','remove','add','replace'].includes(c.type)))return '';
+  const w=JSON.parse(JSON.stringify(ws));const ch=new Set();
+  (s.changes||[]).forEach(c=>{if(!S.sel[s._id]||!S.sel[s._id][c.cid])return;
+    if(c.type==='remove'){w.workouts=w.workouts.filter(x=>x.id!==c.workoutId);ch.add(c.date)}
+    if(c.type==='move'){const x=w.workouts.find(y=>y.id===c.workoutId);if(x){x.date=c.newDate;ch.add(c.date);ch.add(c.newDate)}}
+    if(c.type==='add'){w.workouts.push({...c.after,date:c.date});ch.add(c.date)}
+    if(c.type==='replace'){ch.add(c.date)}});
+  return `<div class="mw">${[...Array(7)].map((_,i)=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);
+    return `<div class="${ch.has(d)?'chd':''} ${d<today?'past':''}"><span>${DOW[i].slice(0,2)}</span>${xs.length?xs.map(x=>`<i style="background:${(SP[x.sport]||['','#666'])[1]}" title="${esc(x.title)}">${esc((SP[x.sport]||['?'])[0][0])}</i>`).join(''):'<em>·</em>'}</div>`}).join('')}</div>`;
+}
 function vReview(){
   const pend=S.suggestions.filter(s=>s.status==='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1);
   const past=S.suggestions.filter(s=>s.status!=='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1).slice(0,12);
   const P=pend.map(s=>{S.sel[s._id]=S.sel[s._id]||Object.fromEntries((s.changes||[]).map(c=>[c.cid,true]));
     return `<div class="card sg" data-sid="${esc(s._id)}"><div class="row between"><span class="status s-pending">Pending</span><span class="small muted">${esc((s.createdAt||'').slice(0,16).replace('T',' '))}</span></div>
-    <h3 style="margin-top:8px;font-size:16px">${esc(s.headline||'Weekly check')}</h3><div class="note">${esc(s.summary||'')}</div>
+    <h3 style="margin-top:8px;font-size:16px">${esc(s.headline||'Weekly check')}</h3>${s.source==='app'?'':`<div class="note clamp" onclick="this.classList.toggle('open')">${esc(s.summary||'')}</div>`}<div data-mw>${miniWeek(s)}</div>
     ${s.metrics?`<details style="margin-top:8px"><summary>Garmin data behind this</summary><div class="kv" style="margin-top:6px">${Object.entries(s.metrics).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div></details>`:''}
-    ${(s.changes||[]).length?(s.changes||[]).map(c=>{const d=describeChange(c);return `<label class="chg"><input type="checkbox" data-cid="${esc(c.cid)}" ${S.sel[s._id][c.cid]?'checked':''}><div><b style="font-size:13.5px">${d.h}</b><div class="b">${d.b}</div><div class="a">→ ${d.a}</div><div class="why">${esc(c.why||'')}</div></div></label>`}).join(''):'<div class="note muted">No plan changes proposed — status report only.</div>'}
+    ${(s.changes||[]).length?(s.changes||[]).map(c=>{return `<label class="chg"><input type="checkbox" data-cid="${esc(c.cid)}" ${S.sel[s._id][c.cid]?'checked':''}><div><div class="cl">${chgLine(c)}</div>${c.why?`<div class="why1" onclick="event.preventDefault();this.classList.toggle('open')">${esc(c.why)}</div>`:''}</div></label>`}).join(''):'<div class="note muted">No plan changes proposed — status report only.</div>'}
     <textarea placeholder="Comment for the coach (optional) — read at the next Sunday check" style="margin-top:10px" data-com></textarea>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">${(s.changes||[]).length?'<button class="btn p" data-act="approve">Approve selected</button><button class="btn d" data-act="reject">Reject all</button>':'<button class="btn p" data-act="ack">Got it</button>'}</div><div data-msg></div></div>`}).join('');
   const H=past.map(s=>{const cls=s.status==='approved'?'s-approved':s.status==='rejected'?'s-rejected':'s-partial';
@@ -810,7 +890,7 @@ function vReview(){
   ${H?`<h2 class="sec">History</h2>${H}`:''}`;
 }
 function bindReview(){document.querySelectorAll('.sg').forEach(card=>{const sid=card.dataset.sid;
-  card.querySelectorAll('input[data-cid]').forEach(i=>i.onchange=()=>{S.sel[sid][i.dataset.cid]=i.checked});
+  card.querySelectorAll('input[data-cid]').forEach(i=>i.onchange=()=>{S.sel[sid][i.dataset.cid]=i.checked;const s=S.suggestions.find(x=>x._id===sid);const m=card.querySelector('[data-mw]');if(s&&m)m.innerHTML=miniWeek(s)});
   card.querySelectorAll('button[data-act]').forEach(b=>b.onclick=()=>decide(sid,b.dataset.act,card))})}
 function validateWeek(w){const by={};(w.workouts||[]).forEach(x=>by[x.date]=(by[x.date]||0)+1);const e=[];
   if(w.workouts.length>7)e.push(`${fmtD(w.weekStart)} week would have ${w.workouts.length} workouts (max 7)`);
