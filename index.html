@@ -453,56 +453,56 @@ const isHardW=x=>!!x.key||HARDK.has(x.kind)||x.sport==='race'||x.sport==='brick'
 const prioW=x=>x.sport==='race'?0:x.kind==='long'?1:isHardW(x)?2:x.sport==='strength'?3:x.sport==='swim'?4:5;
 const SHORT_MIN=45;
 function replanWeek(w,st){
-  const days=[...Array(7)].map((_,i)=>addD(w.weekStart,i)).filter(d=>d>=today);
-  const plan=w.workouts.map(x=>({...x,_orig:x.date}));
-  const fixed=x=>x.date<today||x.sport==='race';
-  const tooLong=x=>(x.dur||0)>SHORT_MIN;
-  const changes=[];let n=0;const cid=()=>'c'+(++n);
-  const clean=x=>{const {_orig,...r}=x;return r};
-  const orig=id=>w.workouts.find(y=>y.id===id);
-  const doubles=(excl)=>{const c={};plan.forEach(y=>{if(y.date)c[y.date]=(c[y.date]||0)+1});return Object.entries(c).filter(([d,k])=>k>=2&&d!==excl).length};
-  const hardNear=(d,self)=>plan.some(y=>y!==self&&y.date&&isHardW(y)&&Math.abs(dBetween(d,y.date))===1);
-  const runHard=y=>isHardW(y)&&['run','brick','bike','race'].includes(y.sport);
-  const runHardNear=(d,self)=>plan.some(y=>y!==self&&y.date&&runHard(y)&&Math.abs(dBetween(d,y.date))===1);
-  const why0=x=>st[x._orig]==='busy'?`You're busy on ${DOW[(parse(x._orig).getDay()+6)%7]}`:`Only ~${SHORT_MIN} min on ${DOW[(parse(x._orig).getDay()+6)%7]}`;
-  // 1) short days: shorten easy sessions in place
-  plan.filter(x=>!fixed(x)&&st[x.date]==='short'&&tooLong(x)&&prioW(x)>=4).forEach(x=>{
-    const f=SHORT_MIN/(x.dur||SHORT_MIN);const after={...clean(orig(x.id)),dur:SHORT_MIN,title:x.title+' (short)',...(x.km?{km:Math.round(x.km*f*10)/10}:{}),
-      steps:[['Short version',`Total ${SHORT_MIN} min at the same easy effort — do the warm-up and as much of the main part as fits. Don't speed up to squeeze more in.`],...(x.steps||[])]};
-    delete after.id;delete after.date;Object.assign(x,{dur:SHORT_MIN});
-    changes.push({cid:cid(),type:'replace',date:x.date,workoutId:x.id,before:orig(x.id),after,why:`${why0(x)} — kept the session but cut it to ${SHORT_MIN} min. An easy run's benefit comes from doing it, not from the last 15 minutes.`})});
-  // 2) move what no longer fits
-  const disp=plan.filter(x=>!fixed(x)&&(st[x.date]==='busy'||(st[x.date]==='short'&&tooLong(x)))).sort((a,b)=>prioW(a)-prioW(b));
-  disp.forEach(x=>x.date=null);
-  for(const x of disp){
-    let best=null,bs=1e9;
-    for(const d of days){
-      if(st[d]==='busy'||(st[d]==='short'&&tooLong(x)))continue;
-      const on=plan.filter(y=>y.date===d);
-      if(on.some(y=>y.sport==='race')||on.length>=2)continue;
-      if(isHardW(x)&&plan.some(y=>y.sport==='race'&&y.date&&Math.abs(dBetween(d,y.date))===1))continue;
-      if(on.length===1){if(doubles(d)>=1)continue;if(on[0].sport==='run'&&x.sport==='run')continue;if(isHardW(on[0])&&isHardW(x))continue}
-      let s=Math.abs(dBetween(x._orig,d))+(on.length?3:0);
-      if(isHardW(x)&&hardNear(d,x)){if(runHard(x)&&runHardNear(d,x))continue;s+=4}
-      if(x.kind==='long'&&![5,6].includes((parse(d).getDay()+6)%7))s+=2;
-      if(x.sport==='run'||x.sport==='brick'){const isRun=dd=>plan.some(y=>y!==x&&y.date===dd&&(y.sport==='run'||y.sport==='brick'||(y.sport==='race'&&y.km)));
-        const p1=isRun(addD(d,-1)),n1=isRun(addD(d,1));s+=(p1?2:0)+(n1?2:0);
-        if((p1&&n1)||(p1&&isRun(addD(d,-2)))||(n1&&isRun(addD(d,2))))s+=4;}
-      if(d<x._orig)s+=0.5;
-      if(s<bs){bs=s;best=d}
-    }
-    if(!best&&isHardW(x)){ // make room: drop an easy run on a free day
-      const ez=plan.filter(y=>y.date&&!fixed(y)&&prioW(y)===5&&st[y.date]!=='busy'&&!(st[y.date]==='short'&&tooLong(x))&&!(runHard(x)&&runHardNear(y.date,x))).sort((a,b)=>Math.abs(dBetween(x._orig,a.date))-Math.abs(dBetween(x._orig,b.date)))[0];
-      if(ez){best=ez.date;ez.date=null;ez._bumped=x.title;disp.push(ez)}
-    }
-    if(best){x.date=best;changes.push({cid:cid(),type:'move',date:x._orig,newDate:best,workoutId:x.id,before:orig(x.id),
-        why:x._bumped?`Swapped with "${x._bumped}" so the key session keeps a recovery day around it. ${DOW[(parse(best).getDay()+6)%7]} is the best free slot for this easy run.`:`${why0(x)}. ${DOW[(parse(best).getDay()+6)%7]} is the closest day that keeps the week's rules${isHardW(x)?' and a recovery day around the hard session':''}.`})}
-    else{const keep=plan.filter(y=>y.date&&isHardW(y)&&y.sport!=='swim'&&y.kind!=='long'&&y!==x).map(y=>`${DOW[(parse(y.date).getDay()+6)%7]}'s ${y.title.toLowerCase()}`);
-      changes.push({cid:cid(),type:'remove',date:x._orig,workoutId:x.id,before:orig(x.id),why:x._bumped?`Gives its day to "${x._bumped}" — a key session is worth more than an easy run, and there's no other free slot this week.`:isHardW(x)?`${why0(x)}, and fitting it into the days left would put two hard sessions back to back.${keep.length?` ${keep[0]} still gives you this week's quality work.`:''} Missing one hard session costs far less than cramming it.`:`${why0(x)} and there's no free slot left without stacking sessions. Skipping one easy ${x.sport==='run'?'run':'session'} costs nothing; cramming does.`})}
+  const D=[...Array(7)].map((_,i)=>addD(w.weekStart,i));const dow=d=>DOW[(parse(d).getDay()+6)%7];
+  const MM=matchAll();const done=x=>['done','shifted'].includes((MM[x.id]||{}).st);
+  const isMov=x=>x.date>=today&&x.sport!=='race'&&!done(x);
+  const mov=w.workouts.filter(isMov).sort((a,b)=>prioW(a)-prioW(b));
+  const fixedIn=w.workouts.filter(x=>!isMov(x));
+  const outside=allWorkouts().filter(x=>x.date===addD(w.weekStart,-1)||x.date===addD(w.weekStart,7));
+  const avail=D.filter(d=>d>=today&&st[d]!=='busy');
+  const isRun=x=>x.sport==='run'||x.sport==='brick'||(x.sport==='race'&&x.km);
+  const runHard=x=>isHardW(x)&&(isRun(x)||x.sport==='bike');
+  const long=x=>(x.dur||0)>SHORT_MIN;
+  const dropCost=x=>x.kind==='long'?25:runHard(x)?14:x.sport==='strength'?9:x.sport==='swim'?8:6;
+  const asg=new Array(mov.length);let best=null,bestC=1e9;
+  function evalC(){
+    let c=0;const byDay={};const add=(d,x)=>(byDay[d]=byDay[d]||[]).push(x);
+    fixedIn.forEach(x=>add(x.date,x));outside.forEach(x=>add(x.date,x));
+    mov.forEach((x,i)=>{const d=asg[i];if(d==null){c+=dropCost(x);return}add(d,x);
+      if(d!==x.date)c+=1+0.15*Math.abs(dBetween(x.date,d))+(x.key||x.kind==='long'?0.5:0);
+      if(st[d]==='short'&&long(x))c+=0.8;if(x.kind==='long'&&![5,6].includes((parse(d).getDay()+6)%7))c+=2});
+    let dbl=0;D.forEach(d=>{const a=byDay[d]||[];if(a.length>=2){dbl++;c+=3}if(a.some(runHard)&&a.some(x=>x.sport==='strength'))c+=1});if(dbl>1)return 1e9;
+    const T=[addD(w.weekStart,-1),...D,addD(w.weekStart,7)];const R=T.map(d=>(byDay[d]||[]).some(isRun)),H=T.map(d=>(byDay[d]||[]).some(runHard)),RC=T.map(d=>(byDay[d]||[]).some(x=>x.sport==='race'));
+    for(let i=0;i<T.length-1;i++){if(R[i]&&R[i+1])c+=1.5;if(H[i]&&H[i+1])c+=20;if((H[i]&&RC[i+1])||(RC[i]&&H[i+1]))c+=20}
+    for(let i=0;i<T.length-2;i++)if(R[i]&&R[i+1]&&R[i+2])c+=3;
+    return c;
   }
-  // keep 'replace' before a 'move' of the same workout out of the list (move wins)
-  const moved=new Set(changes.filter(c=>c.type!=='replace').map(c=>c.workoutId));
-  return changes.filter(c=>c.type!=='replace'||!moved.has(c.workoutId));
+  function dfs(i,part,cnt){
+    if(part>=bestC)return;
+    if(i===mov.length){const c=evalC();if(c<bestC){bestC=c;best=asg.slice()}return}
+    const x=mov[i];
+    for(const d of avail){
+      if(st[d]==='short'&&long(x)&&prioW(x)<4)continue;
+      const here=fixedIn.filter(y=>y.date===d).concat(mov.filter((y,j)=>j<i&&asg[j]===d));
+      if(here.length>=2||here.some(y=>y.sport==='race'))continue;
+      if(here.length&&((isRun(x)&&here.some(isRun))||(isHardW(x)&&here.some(isHardW))))continue;
+      asg[i]=d;dfs(i+1,part+(d!==x.date?1:0),cnt);
+    }
+    asg[i]=null;dfs(i+1,part+dropCost(x),cnt);asg[i]=undefined;
+  }
+  dfs(0,0,0);
+  const changes=[];let n=0;const cid=()=>'c'+(++n);
+  const shortAfter=x=>{const f=SHORT_MIN/(x.dur||SHORT_MIN);const a={...x,dur:SHORT_MIN,title:x.title+' (short)',...(x.km?{km:Math.round(x.km*f*10)/10}:{}),steps:[['Short version',`${SHORT_MIN} min total, same easy effort.`],...(x.steps||[])]};delete a.id;delete a.date;return a};
+  if(best)mov.forEach((x,i)=>{const d=best[i];
+    if(d==null){changes.push({cid:cid(),type:'remove',date:x.date,workoutId:x.id,before:x,why:'No good slot left — skipping beats cramming.'});return}
+    const sh=st[d]==='short'&&long(x);
+    if(d!==x.date)changes.push({cid:cid(),type:'move',date:x.date,newDate:d,workoutId:x.id,before:x,...(sh?{after:shortAfter(x)}:{}),why:st[x.date]==='busy'||st[x.date]==='short'?`${dow(x.date)} ${st[x.date]} → ${dow(d)}.${sh?` Cut to ${SHORT_MIN} min.`:''}`:isRun(x)?`Keeps runs on separate days.`:`Makes room so runs don't stack.`});
+    else if(sh)changes.push({cid:cid(),type:'replace',date:x.date,workoutId:x.id,before:x,after:shortAfter(x),why:`Short day → ${SHORT_MIN} min.`});
+  });
+  const nm=x=>x.title.split(/ — | \+ | \(/)[0].toLowerCase();
+  const fin=D.map(d=>{const xs=fixedIn.filter(y=>y.date===d).concat(mov.filter((y,i)=>best&&best[i]===d));return `${dow(d)} ${xs.length?xs.map(nm).join(' + '):'—'}`});
+  changes.weekLine=fin.join(' · ');
+  return changes;
 }
 function openReplan(){
   const w=weekList()[S.weekIdx];if(!w)return;S.rp={};
@@ -520,15 +520,15 @@ async function rpGo(){
   const w=weekList()[S.weekIdx];const m=document.getElementById('rpMsg');const st={...S.rp};
   const marked=Object.entries(st).filter(([,v])=>v!=='ok');if(!marked.length){m.innerHTML='<span class="err">Mark at least one day as Short or Busy.</span>';return}
   const changes=replanWeek(w,st);
-  const desc=marked.map(([d,v])=>`${v} ${DOW[(parse(d).getDay()+6)%7]} ${parse(d).getDate()}`).join(', ');const note=document.getElementById('rpNote').value.trim();
+  const desc=marked.map(([d,v])=>`${DOW[(parse(d).getDay()+6)%7]} ${v}`).join(', ');const note=document.getElementById('rpNote').value.trim();
   try{
     const sim=JSON.parse(JSON.stringify(w));changes.forEach(c=>{if(c.type==='remove')sim.workouts=sim.workouts.filter(x=>x.id!==c.workoutId);if(c.type==='move'){const x=sim.workouts.find(y=>y.id===c.workoutId);if(x)x.date=c.newDate}});
     const errs=validateWeek(sim);if(errs.length)throw new Error('Could not find a valid arrangement: '+errs.join('; '));
     const id=today+'-reschedule-'+Math.random().toString(36).slice(2,6);
     const mv=changes.filter(c=>c.type==='move').length,rm=changes.filter(c=>c.type==='remove').length,sh=changes.filter(c=>c.type==='replace').length;
     await S.db.doc('suggestions/'+id).set({createdAt:new Date().toISOString(),forWeek:w.weekStart,status:'pending',source:'app',
-      headline:`Week of ${fmtD(w.weekStart)} rearranged around your schedule`,
-      summary:changes.length?`You marked: ${desc}. ${[mv&&mv+' moved',sh&&sh+' shortened',rm&&rm+' dropped'].filter(Boolean).join(', ')}. Key sessions keep priority, no two hard days back to back where possible, max one double day. Untick anything you don't want.`:`You marked: ${desc}. Nothing needs to move — no planned session falls on those days.`,
+      headline:`${[mv&&mv+' moved',sh&&sh+' shortened',rm&&rm+' dropped'].filter(Boolean).join(' · ')||'No changes'} — week of ${fmtD(w.weekStart)}`,
+      summary:changes.length?`${desc}. New week: ${changes.weekLine}`:`${desc}. Nothing needs to move.`,
       changes});
     await S.db.collection('notes').add({text:`Schedule change, week of ${fmtD(w.weekStart)}: ${desc}.${note?' '+note:''}`,createdAt:new Date().toISOString(),status:'open'});
     closeSheet();go('review');
