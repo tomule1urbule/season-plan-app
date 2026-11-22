@@ -200,6 +200,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .fl{margin:8px 0 0 18px;padding:0;font-size:13.5px;line-height:1.5}
 .spin{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;margin-right:6px;vertical-align:-1px;animation:sp 0.8s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+.rpbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:0 0 12px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text)}
+.rprow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.seg{display:flex;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;flex-shrink:0}.seg button{border:0;background:none;color:var(--muted);font-weight:600;font-size:12.5px;padding:7px 10px;border-radius:8px}
+.seg button.on{background:var(--accent);color:#16142c}.seg button[data-v=busy].on{background:var(--crit);color:#fff}.seg button[data-v=short].on{background:var(--warn);color:#16142c}
 </style>
 </head>
 <body>
@@ -421,13 +426,95 @@ function vWeek(){
   return `<div class="wknav"><button onclick="S.weekIdx=Math.max(0,S.weekIdx-1);render()" aria-label="Previous week">‹</button>
     <div class="t"><div class="d">${fmtD(w.weekStart)} – ${fmtD(addD(w.weekStart,6))}</div><div class="small muted">Week ${S.weekIdx+1} of ${L.length}${S.weekIdx!==curIdx()?` · <a href="#" onclick="S.weekIdx=curIdx();render();return false">this week</a>`:''}</div></div>
     <button onclick="S.weekIdx=Math.min(${L.length-1},S.weekIdx+1);render()" aria-label="Next week">›</button></div>
-  ${heroToday(w)}${weekStrip(w)}
+  ${heroToday(w)}${weekStrip(w)}${addD(w.weekStart,6)>=today?`<button class="btn rpbtn" onclick="openReplan()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>My schedule changed — rearrange this week</button>`:''}
   <div class="card"><div class="row wrapf"><span class="phase" style="background:${blk.col||'#333'}33;color:#eceef2;border-left:3px solid ${blk.col||'#555'}">${esc(blk.name||w.phase)}</span><span class="small muted">${esc(w.phase)}</span></div>
     <h2 style="font-size:18px;margin-top:8px">${esc(w.focus)}</h2>${w.note?`<div class="note">${esc(w.note)}</div>`:''}
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div>
   <div class="card">${days}</div>
   <div class="small muted" style="text-align:center">Tap a session for the full workout, why it matters and coaching cues.</div>`;
 }
+// ================================================================== REPLAN: rearrange a week around busy days
+const HARDK=new Set(['intervals','intervals-10k','threshold','cruise','hills','fartlek','hmp','mp','long','css','brick','bike-intervals','speed','swim-test']);
+const isHardW=x=>!!x.key||HARDK.has(x.kind)||x.sport==='race'||x.sport==='brick';
+const prioW=x=>x.sport==='race'?0:x.kind==='long'?1:isHardW(x)?2:x.sport==='strength'?3:x.sport==='swim'?4:5;
+const SHORT_MIN=45;
+function replanWeek(w,st){
+  const days=[...Array(7)].map((_,i)=>addD(w.weekStart,i)).filter(d=>d>=today);
+  const plan=w.workouts.map(x=>({...x,_orig:x.date}));
+  const fixed=x=>x.date<today||x.sport==='race';
+  const tooLong=x=>(x.dur||0)>SHORT_MIN;
+  const changes=[];let n=0;const cid=()=>'c'+(++n);
+  const clean=x=>{const {_orig,...r}=x;return r};
+  const orig=id=>w.workouts.find(y=>y.id===id);
+  const doubles=(excl)=>{const c={};plan.forEach(y=>{if(y.date)c[y.date]=(c[y.date]||0)+1});return Object.entries(c).filter(([d,k])=>k>=2&&d!==excl).length};
+  const hardNear=(d,self)=>plan.some(y=>y!==self&&y.date&&isHardW(y)&&Math.abs(dBetween(d,y.date))===1);
+  const why0=x=>st[x._orig]==='busy'?`You're busy on ${DOW[(parse(x._orig).getDay()+6)%7]}`:`Only ~${SHORT_MIN} min on ${DOW[(parse(x._orig).getDay()+6)%7]}`;
+  // 1) short days: shorten easy sessions in place
+  plan.filter(x=>!fixed(x)&&st[x.date]==='short'&&tooLong(x)&&prioW(x)>=4).forEach(x=>{
+    const f=SHORT_MIN/(x.dur||SHORT_MIN);const after={...clean(orig(x.id)),dur:SHORT_MIN,title:x.title+' (short)',...(x.km?{km:Math.round(x.km*f*10)/10}:{}),
+      steps:[['Short version',`Total ${SHORT_MIN} min at the same easy effort — do the warm-up and as much of the main part as fits. Don't speed up to squeeze more in.`],...(x.steps||[])]};
+    delete after.id;delete after.date;Object.assign(x,{dur:SHORT_MIN});
+    changes.push({cid:cid(),type:'replace',date:x.date,workoutId:x.id,before:orig(x.id),after,why:`${why0(x)} — kept the session but cut it to ${SHORT_MIN} min. An easy run's benefit comes from doing it, not from the last 15 minutes.`})});
+  // 2) move what no longer fits
+  const disp=plan.filter(x=>!fixed(x)&&(st[x.date]==='busy'||(st[x.date]==='short'&&tooLong(x)))).sort((a,b)=>prioW(a)-prioW(b));
+  disp.forEach(x=>x.date=null);
+  for(const x of disp){
+    let best=null,bs=1e9;
+    for(const d of days){
+      if(st[d]==='busy'||(st[d]==='short'&&tooLong(x)))continue;
+      const on=plan.filter(y=>y.date===d);
+      if(on.some(y=>y.sport==='race')||on.length>=2)continue;
+      if(isHardW(x)&&plan.some(y=>y.sport==='race'&&y.date&&Math.abs(dBetween(d,y.date))===1))continue;
+      if(on.length===1){if(doubles(d)>=1)continue;if(on[0].sport==='run'&&x.sport==='run')continue;if(isHardW(on[0])&&isHardW(x))continue}
+      let s=Math.abs(dBetween(x._orig,d))+(on.length?3:0);
+      if(isHardW(x)&&hardNear(d,x))s+=4;
+      if(x.kind==='long'&&![5,6].includes((parse(d).getDay()+6)%7))s+=2;
+      if(s<bs){bs=s;best=d}
+    }
+    if(!best&&isHardW(x)){ // make room: drop an easy run on a free day
+      const ez=plan.filter(y=>y.date&&!fixed(y)&&prioW(y)===5&&st[y.date]!=='busy'&&!(st[y.date]==='short'&&tooLong(x))).sort((a,b)=>Math.abs(dBetween(x._orig,a.date))-Math.abs(dBetween(x._orig,b.date)))[0];
+      if(ez){changes.push({cid:cid(),type:'remove',date:ez.date,workoutId:ez.id,before:orig(ez.id),why:`Makes room for "${x.title}" — a key session is worth more than an easy run this week.`});best=ez.date;ez.date=null}
+    }
+    if(best){x.date=best;changes.push({cid:cid(),type:'move',date:x._orig,newDate:best,workoutId:x.id,before:orig(x.id),
+        why:`${why0(x)}. ${DOW[(parse(best).getDay()+6)%7]} is the closest day that keeps the week's rules${isHardW(x)?' and a recovery day around the hard session':''}.`})}
+    else{const keep=plan.filter(y=>y.date&&isHardW(y)&&y.sport!=='swim'&&y.kind!=='long'&&y!==x).map(y=>`${DOW[(parse(y.date).getDay()+6)%7]}'s ${y.title.toLowerCase()}`);
+      changes.push({cid:cid(),type:'remove',date:x._orig,workoutId:x.id,before:orig(x.id),why:isHardW(x)?`${why0(x)}, and fitting it into the days left would put two hard sessions back to back.${keep.length?` ${keep[0]} still gives you this week's quality work.`:''} Missing one hard session costs far less than cramming it.`:`${why0(x)} and there's no free slot left without stacking sessions. Skipping one easy ${x.sport==='run'?'run':'session'} costs nothing; cramming does.`})}
+  }
+  // keep 'replace' before a 'move' of the same workout out of the list (move wins)
+  const moved=new Set(changes.filter(c=>c.type!=='replace').map(c=>c.workoutId));
+  return changes.filter(c=>c.type!=='replace'||!moved.has(c.workoutId));
+}
+function openReplan(){
+  const w=weekList()[S.weekIdx];if(!w)return;S.rp={};
+  const days=[...Array(7)].map((_,i)=>addD(w.weekStart,i)).filter(d=>d>=today);
+  const row=d=>{const ws=w.workouts.filter(x=>x.date===d);return `<div class="rprow"><div><b>${DOW[(parse(d).getDay()+6)%7]} ${parse(d).getDate()}</b><div class="tiny muted">${ws.length?ws.map(x=>esc(x.title)).join(' · '):'Rest day'}</div></div>
+    <div class="seg" data-d="${d}">${[['ok','Free'],['short','Short'],['busy','Busy']].map(([k,l])=>`<button class="${k==='ok'?'on':''}" data-v="${k}" onclick="rpSet(this)">${l}</button>`).join('')}</div></div>`};
+  document.getElementById('sheetIn').innerHTML=`<h2>My schedule changed</h2><div class="small muted" style="margin-top:4px">${fmtD(w.weekStart)} – ${fmtD(addD(w.weekStart,6))}. Mark the days that changed — <b>Short</b> means about ${SHORT_MIN} minutes at most. I'll rearrange the week and send it to Review for your approval.</div>
+    <div style="margin-top:12px">${days.length?days.map(row).join(''):'<div class="note">No days left in this week.</div>'}</div>
+    <textarea id="rpNote" placeholder="Optional note for the coach (e.g. work trip Tue–Wed)" style="margin-top:12px"></textarea>
+    <div class="row" style="margin-top:10px;gap:8px"><button class="btn p" onclick="rpGo()">Suggest new week</button><span id="rpMsg" class="small"></span></div>`;
+  document.getElementById('ov').classList.add('on');const sh=document.getElementById('sheet');sh.classList.add('on');sh.scrollTop=0;
+}
+function rpSet(b){const p=b.parentElement;p.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));S.rp[p.dataset.d]=b.dataset.v}
+async function rpGo(){
+  const w=weekList()[S.weekIdx];const m=document.getElementById('rpMsg');const st={...S.rp};
+  const marked=Object.entries(st).filter(([,v])=>v!=='ok');if(!marked.length){m.innerHTML='<span class="err">Mark at least one day as Short or Busy.</span>';return}
+  const changes=replanWeek(w,st);
+  const desc=marked.map(([d,v])=>`${v} ${DOW[(parse(d).getDay()+6)%7]} ${parse(d).getDate()}`).join(', ');const note=document.getElementById('rpNote').value.trim();
+  try{
+    const sim=JSON.parse(JSON.stringify(w));changes.forEach(c=>{if(c.type==='remove')sim.workouts=sim.workouts.filter(x=>x.id!==c.workoutId);if(c.type==='move'){const x=sim.workouts.find(y=>y.id===c.workoutId);if(x)x.date=c.newDate}});
+    const errs=validateWeek(sim);if(errs.length)throw new Error('Could not find a valid arrangement: '+errs.join('; '));
+    const id=today+'-reschedule-'+Math.random().toString(36).slice(2,6);
+    const mv=changes.filter(c=>c.type==='move').length,rm=changes.filter(c=>c.type==='remove').length,sh=changes.filter(c=>c.type==='replace').length;
+    await S.db.doc('suggestions/'+id).set({createdAt:new Date().toISOString(),forWeek:w.weekStart,status:'pending',source:'app',
+      headline:`Week of ${fmtD(w.weekStart)} rearranged around your schedule`,
+      summary:changes.length?`You marked: ${desc}. ${[mv&&mv+' moved',sh&&sh+' shortened',rm&&rm+' dropped'].filter(Boolean).join(', ')}. Key sessions keep priority, no two hard days back to back where possible, max one double day. Untick anything you don't want.`:`You marked: ${desc}. Nothing needs to move — no planned session falls on those days.`,
+      changes});
+    await S.db.collection('notes').add({text:`Schedule change, week of ${fmtD(w.weekStart)}: ${desc}.${note?' '+note:''}`,createdAt:new Date().toISOString(),status:'open'});
+    closeSheet();go('review');
+  }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`}
+}
+
 function findWo(id){for(const w of weekList())for(const x of w.workouts||[])if(x.id===id)return x}
 function openWo(id){
   const x=findWo(id);if(!x)return;const [lbl,col]=SP[x.sport]||['',"#555"];const K=KIND[x.kind]||KIND[x.sport]||{};
