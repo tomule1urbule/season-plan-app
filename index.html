@@ -462,6 +462,8 @@ function replanWeek(w,st){
   const orig=id=>w.workouts.find(y=>y.id===id);
   const doubles=(excl)=>{const c={};plan.forEach(y=>{if(y.date)c[y.date]=(c[y.date]||0)+1});return Object.entries(c).filter(([d,k])=>k>=2&&d!==excl).length};
   const hardNear=(d,self)=>plan.some(y=>y!==self&&y.date&&isHardW(y)&&Math.abs(dBetween(d,y.date))===1);
+  const runHard=y=>isHardW(y)&&['run','brick','bike','race'].includes(y.sport);
+  const runHardNear=(d,self)=>plan.some(y=>y!==self&&y.date&&runHard(y)&&Math.abs(dBetween(d,y.date))===1);
   const why0=x=>st[x._orig]==='busy'?`You're busy on ${DOW[(parse(x._orig).getDay()+6)%7]}`:`Only ~${SHORT_MIN} min on ${DOW[(parse(x._orig).getDay()+6)%7]}`;
   // 1) short days: shorten easy sessions in place
   plan.filter(x=>!fixed(x)&&st[x.date]==='short'&&tooLong(x)&&prioW(x)>=4).forEach(x=>{
@@ -481,18 +483,22 @@ function replanWeek(w,st){
       if(isHardW(x)&&plan.some(y=>y.sport==='race'&&y.date&&Math.abs(dBetween(d,y.date))===1))continue;
       if(on.length===1){if(doubles(d)>=1)continue;if(on[0].sport==='run'&&x.sport==='run')continue;if(isHardW(on[0])&&isHardW(x))continue}
       let s=Math.abs(dBetween(x._orig,d))+(on.length?3:0);
-      if(isHardW(x)&&hardNear(d,x))s+=4;
+      if(isHardW(x)&&hardNear(d,x)){if(runHard(x)&&runHardNear(d,x))continue;s+=4}
       if(x.kind==='long'&&![5,6].includes((parse(d).getDay()+6)%7))s+=2;
+      if(x.sport==='run'||x.sport==='brick'){const isRun=dd=>plan.some(y=>y!==x&&y.date===dd&&(y.sport==='run'||y.sport==='brick'||(y.sport==='race'&&y.km)));
+        const p1=isRun(addD(d,-1)),n1=isRun(addD(d,1));s+=(p1?2:0)+(n1?2:0);
+        if((p1&&n1)||(p1&&isRun(addD(d,-2)))||(n1&&isRun(addD(d,2))))s+=4;}
+      if(d<x._orig)s+=0.5;
       if(s<bs){bs=s;best=d}
     }
     if(!best&&isHardW(x)){ // make room: drop an easy run on a free day
-      const ez=plan.filter(y=>y.date&&!fixed(y)&&prioW(y)===5&&st[y.date]!=='busy'&&!(st[y.date]==='short'&&tooLong(x))).sort((a,b)=>Math.abs(dBetween(x._orig,a.date))-Math.abs(dBetween(x._orig,b.date)))[0];
-      if(ez){changes.push({cid:cid(),type:'remove',date:ez.date,workoutId:ez.id,before:orig(ez.id),why:`Makes room for "${x.title}" — a key session is worth more than an easy run this week.`});best=ez.date;ez.date=null}
+      const ez=plan.filter(y=>y.date&&!fixed(y)&&prioW(y)===5&&st[y.date]!=='busy'&&!(st[y.date]==='short'&&tooLong(x))&&!(runHard(x)&&runHardNear(y.date,x))).sort((a,b)=>Math.abs(dBetween(x._orig,a.date))-Math.abs(dBetween(x._orig,b.date)))[0];
+      if(ez){best=ez.date;ez.date=null;ez._bumped=x.title;disp.push(ez)}
     }
     if(best){x.date=best;changes.push({cid:cid(),type:'move',date:x._orig,newDate:best,workoutId:x.id,before:orig(x.id),
-        why:`${why0(x)}. ${DOW[(parse(best).getDay()+6)%7]} is the closest day that keeps the week's rules${isHardW(x)?' and a recovery day around the hard session':''}.`})}
+        why:x._bumped?`Swapped with "${x._bumped}" so the key session keeps a recovery day around it. ${DOW[(parse(best).getDay()+6)%7]} is the best free slot for this easy run.`:`${why0(x)}. ${DOW[(parse(best).getDay()+6)%7]} is the closest day that keeps the week's rules${isHardW(x)?' and a recovery day around the hard session':''}.`})}
     else{const keep=plan.filter(y=>y.date&&isHardW(y)&&y.sport!=='swim'&&y.kind!=='long'&&y!==x).map(y=>`${DOW[(parse(y.date).getDay()+6)%7]}'s ${y.title.toLowerCase()}`);
-      changes.push({cid:cid(),type:'remove',date:x._orig,workoutId:x.id,before:orig(x.id),why:isHardW(x)?`${why0(x)}, and fitting it into the days left would put two hard sessions back to back.${keep.length?` ${keep[0]} still gives you this week's quality work.`:''} Missing one hard session costs far less than cramming it.`:`${why0(x)} and there's no free slot left without stacking sessions. Skipping one easy ${x.sport==='run'?'run':'session'} costs nothing; cramming does.`})}
+      changes.push({cid:cid(),type:'remove',date:x._orig,workoutId:x.id,before:orig(x.id),why:x._bumped?`Gives its day to "${x._bumped}" — a key session is worth more than an easy run, and there's no other free slot this week.`:isHardW(x)?`${why0(x)}, and fitting it into the days left would put two hard sessions back to back.${keep.length?` ${keep[0]} still gives you this week's quality work.`:''} Missing one hard session costs far less than cramming it.`:`${why0(x)} and there's no free slot left without stacking sessions. Skipping one easy ${x.sport==='run'?'run':'session'} costs nothing; cramming does.`})}
   }
   // keep 'replace' before a 'move' of the same workout out of the list (move wins)
   const moved=new Set(changes.filter(c=>c.type!=='replace').map(c=>c.workoutId));
