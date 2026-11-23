@@ -415,11 +415,17 @@ function paces(){
   const gp=(k,d,fb)=>{const s=toSec(rt[k]&&rt[k].goal);return s?mmss(s/d):(fb)};
   return {vd,P:{E:mmss(secKm(vFor(vd*.70)))+'–'+mmss(secKm(vFor(vd*.62))),M:mmss(raceTime(vd,42195)/42.195),T:mmss(secKm(vFor(vd*.88))),I:mmss(secKm(vFor(vd*.975))),R:mmss(secKm(vFor(vd*1.05))),
     '10KG':g['10KG']||gp('mazeikiai',10,'4:42'),HMG:g.HMG||gp('riga',21.0975,'4:44'),MPG:g.MPG||gp('tallinn',42.195,'5:18'),
-    SE:mmss(css()+15),SS:mmss(css()+7),SC:mmss(css()),SF:mmss(css()-6)}};
+    SE:mmss(css()+15),SS:mmss(css()+7),SC:mmss(css()),SF:mmss(css()-6),...goalSplits(rt)}};
 }
-const TOK=/\{(E|M|T|I|R|10KG|HMG|MPG|SE|SS|SC|SF)\}/g;
-const unitOf=k=>k[0]==='S'&&k.length===2?'/100 m':'/km';
-function fill(t){const {P}=paces();return esc(t).replace(TOK,(_,k)=>`<b class="mono" style="color:var(--accent)">${P[k]}${unitOf(k)}</b>`)}
+function goalSplits(rt){const o={};const t=k=>toSec(rt[k]&&rt[k].goal);const h=x=>x>=3600?hms(x):mmss(x);
+  const a=t('mazeikiai'),b=t('riga'),c=t('tallinn');
+  if(a){o.G10=h(a);o.S10_5=h(a/2);o.S10s=mmss(a/10+4)}
+  if(b){o.GHM=h(b);o.SHM10=h(b*10/21.0975);o.SHM15=h(b*15/21.0975);o.SHMs=mmss(b/21.0975+5)}
+  if(c){o.GM=h(c);o.SM21=h(c/2);o.SM30=h(c*30/42.195);o.SMs=mmss(c/42.195+6)}
+  return o}
+const TOK=/\{(E|M|T|I|R|10KG|HMG|MPG|SE|SS|SC|SF|G10|S10_5|S10s|GHM|SHM10|SHM15|SHMs|GM|SM21|SM30|SMs)\}/g;
+const unitOf=k=>/^(G10|S10_5|GHM|SHM10|SHM15|GM|SM21|SM30)$/.test(k)?'':k[0]==='S'&&k.length===2?'/100 m':'/km';
+function fill(t){const {P}=paces();return esc(t).replace(TOK,(_,k)=>P[k]?`<b class="mono" style="color:var(--accent)">${P[k]}${unitOf(k)}</b>`:'—')}
 function plain(t){const {P}=paces();return String(t??'').replace(TOK,(_,k)=>P[k]+unitOf(k))}
 
 // ================================================================== data helpers
@@ -452,7 +458,7 @@ function render(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
   const nr=nextRace();
   document.getElementById('nextRace').innerHTML=nr?`${esc(nr.name.split(' ')[0])} in <b>${dBetween(today,nr.date)}</b> days`:'Season complete';
-  const pend=S.suggestions.filter(s=>s.status==='pending').concat(S.swimI1&&S.settings&&!S.settings.swimPlan?[{}]:[]);
+  const pend=S.suggestions.filter(s=>s.status==='pending').concat((S.v6&&S.settings&&!(S.settings.planVersion>=6)&&S.settings.planV6!=='skipped')||(S.swimI1&&S.settings&&!S.settings.swimPlan)?[{}]:[]);
   const b=document.getElementById('badge');b.textContent=pend.length;b.classList.toggle('hide',!pend.length);
   document.getElementById('pendingBanner').classList.toggle('hide',!pend.length||S.tab==='review');
   document.getElementById('pbN').textContent=pend.length===1?'1 plan update waiting for your approval':`${pend.length} plan updates waiting for your approval`;
@@ -563,7 +569,7 @@ function vWeek(){
     <button onclick="S.weekIdx=Math.min(${L.length-1},S.weekIdx+1);render()" aria-label="Next week">›</button></div>
   ${heroToday(w)}${weekStrip(w)}
   <details class="wkc"><summary><span class="phase" style="background:${blk.col||'#333'}33;color:#eceef2;border-left:3px solid ${blk.col||'#555'}">${esc(blk.name||w.phase)}</span><span class="ws"><b>${w.workouts.length}</b> sessions · <b>~${Math.round(run)}</b> km · <b>${hrs.toFixed(1)}</b> h</span></summary>
-    <div class="wb"><div style="font-weight:700">${esc(w.focus)}</div>${w.note?`<div class="note">${esc(w.note)}</div>`:''}
+    <div class="wb"><div style="font-weight:700">${esc(w.focus)}</div>${w.note?`<div class="note">${fill(w.note)}</div>`:''}
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div></details>
   <div class="card">${days}</div>
   ${addD(w.weekStart,6)>=today?`<button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
@@ -660,7 +666,7 @@ async function rpGo(){
 const INTC=['#7b86b8','#3fb8a8','#e8b73f','#ef7d3c','#e5508f'];
 const INTN=['Easy','Steady','Moderate','Hard','Very hard'];
 const icol=i=>INTC[Math.max(0,Math.min(4,Math.round(i)-1))];
-const TOKI={E:1,SE:1,M:2.4,MPG:2.6,SS:2,HMG:3,T:3.4,SC:3.4,'10KG':3.8,I:4.3,SF:4.3,R:5};
+const TOKI={S10s:3.8,SHMs:3,SMs:2.6,E:1,SE:1,M:2.4,MPG:2.6,SS:2,HMG:3,T:3.4,SC:3.4,'10KG':3.8,I:4.3,SF:4.3,R:5};
 function paceMin(t){const {P}=paces();const s=String(P[t]||'').match(/(\d+):(\d\d)/);return s?(+s[1]+s[2]/60):null}
 function stepType(l){l=l.toLowerCase();
   if(/^(goal|at a glance|total|note it|fuel|before|t2)\b/.test(l))return 'info';
@@ -742,7 +748,7 @@ function openWo(id){
   const D=DI(x),DK_=DK(x);const why=D.role||x.why||K.why,feel=x.feel||K.feel,cues=x.cues||K.cues,tired=x.tired||K.tired,fuel=x.fuel||K.fuel;
   const {P}=paces();
   const toks=[...new Set(((x.steps||[]).map(s=>s[1]).join(' ')+(x.details||'')).match(TOK)||[])].map(t=>t.slice(1,-1));
-  const names={E:'Easy',M:'Marathon (fitness)',T:'Threshold',I:'Interval',R:'Repetition','10KG':'10K goal',HMG:'Half goal',MPG:'Marathon goal',SE:'Swim easy',SS:'Swim steady',SC:'Swim CSS',SF:'Swim fast'};
+  const names={E:'Easy',M:'Marathon (fitness)',T:'Threshold',I:'Interval',R:'Repetition','10KG':'10K goal',HMG:'Half goal',MPG:'Marathon goal',SE:'Swim easy',SS:'Swim steady',SC:'Swim CSS',SF:'Swim fast',G10:'10K goal time',S10_5:'5 km split',S10s:'Start pace',GHM:'Half goal time',SHM10:'10 km split',SHM15:'15 km split',SHMs:'Start pace',GM:'Marathon goal time',SM21:'Halfway split',SM30:'30 km split',SMs:'Start pace'};
   const sv=stepsView(x);const goal=sv.goal||'';
   const km=x.km?x.km+' km':(x.sport==='run'&&x.dur?'~'+Math.round(estKm(x))+' km':'');
   const acc=(t,body,open)=>body?`<details class="acc"${open?' open':''}><summary>${t}</summary><div class="ab">${body}</div></details>`:'';
@@ -751,7 +757,7 @@ function openWo(id){
   const whyB=[why?esc(why):'',D.role&&K.why&&D.role!==K.why?`<div style="margin-top:6px">${esc(K.why)}</div>`:'',D.context?`<div style="margin-top:6px" class="muted">${esc(D.context)}</div>`:''].join('');
   const feelB=[feel?sub('Effort',esc(feel)):'',DK_.hr?sub('Heart rate',esc(DK_.hr)):'',DK_.success?sub('A good session looks like',esc(DK_.success)):''].join('');
   const tipsB=[cues&&cues.length?sub('Cues',ul(cues)):'',DK_.mistakes&&DK_.mistakes.length?sub('Avoid',ul(DK_.mistakes)):'',DK_.garmin?sub('On your Garmin',esc(DK_.garmin)):''].join('');
-  const paceB=toks.length?`<div class="kv">${toks.map(t=>`<span class="k">${names[t]}</span><span class="mono">${P[t]}${unitOf(t)}</span>`).join('')}</div><div class="tiny muted" style="margin-top:6px">From VDOT ${paces().vd.toFixed(1)} and race targets · swim from CSS ${mmss(css())}/100 m.</div>`:'';
+  const paceB=toks.length?`<div class="kv">${toks.filter(t=>names[t]&&P[t]).map(t=>`<span class="k">${names[t]}</span><span class="mono">${P[t]}${unitOf(t)}</span>`).join('')}</div><div class="tiny muted" style="margin-top:6px">From VDOT ${paces().vd.toFixed(1)} and race targets · swim from CSS ${mmss(css())}/100 m.</div>`:'';
   document.getElementById('sheetIn').innerHTML=`
    <div class="row" style="gap:8px;margin-bottom:6px"><span class="sdot" style="--c:${col}"><i></i>${lbl}</span>${x.key?'<span class="tag key">KEY</span>':''}${x.slot?`<span class="tag slot">${x.slot}</span>`:''}</div>
    <h2>${esc(x.title)}</h2>
@@ -859,7 +865,7 @@ function msTime(label){const m=label.match(/(?:sub-|≤\s*)(\d{1,2}:\d{2}(?::\d{
 function msEvidence(x){
   const acts=allActs().filter(a=>a.date<=x.by);const L=x.label;
   if(x.kind==='race'){const k=Object.keys(RT()).find(k=>RT()[k].date===x.by);const r=k&&RT()[k];if(!r)return null;
-    const goal=msTime(L);const a=allActs().find(a=>a.date===r.date&&(a.sport==='run'||a.sport==='race'));
+    const goal=toSec(r.goal)||msTime(L);const a=allActs().find(a=>a.date===r.date&&(a.sport==='run'||a.sport==='race'));
     const t=r.result?toSec(r.result):a&&a.min?a.min*60:null;if(!t)return {auto:true,state:'wait',text:`Checked automatically from your Garmin race activity on ${fmtD(r.date)}.`};
     return {auto:true,state:goal&&t<=goal||!goal?'met':'missed',text:`Race time ${hms(t)}${goal?` vs target ${hms(goal)}`:''}.`}}
   let m=L.match(/(\d+)\s*km long run/i);
@@ -890,10 +896,10 @@ const MS_MISSED='Nothing breaks. After the date, the Sunday check looks at how c
 function msState(x){if(x.doneAt)return 'done';const e=msEvidence(x);if(e&&e.state==='met')return 'ready';if(x.by<today)return e&&e.state==='missed'?'missed':'overdue';return dBetween(today,x.by)<=14?'soon':'open'}
 const MS_ST={done:['✓','var(--good)','Achieved'],ready:['★','var(--accent)','Garmin says done — confirm'],missed:['✕','var(--crit)','Missed'],overdue:['!','var(--warn)','Date passed'],soon:['●','var(--warn)','Due soon'],open:['○','var(--muted)','Upcoming']};
 function msRow(x){const s=msState(x),[ic,col,lb]=MS_ST[s];const k=MS_KIND[x.kind]||['',''];
-  return `<button class="msr" onclick="openMs('${esc(x.id)}')"><span class="mi" style="color:${col};border-color:${col}">${ic}</span><span class="ml"><span class="mt">${esc(x.label)}</span><span class="tiny"><span style="color:${k[1]}">${k[0]}</span> · <span style="color:${col}">${s==='done'?'✓ '+fmtD(x.doneAt):lb+' · '+fmtD(x.by)}</span></span></span><span class="muted">›</span></button>`}
+  return `<button class="msr" onclick="openMs('${esc(x.id)}')"><span class="mi" style="color:${col};border-color:${col}">${ic}</span><span class="ml"><span class="mt">${esc(msLabel(x))}</span><span class="tiny"><span style="color:${k[1]}">${k[0]}</span> · <span style="color:${col}">${s==='done'?'✓ '+fmtD(x.doneAt):lb+' · '+fmtD(x.by)}</span></span></span><span class="muted">›</span></button>`}
 function openMs(id){
   const x=((S.settings||{}).milestones||[]).find(m=>m.id===id);if(!x)return;const s=msState(x),[ic,col,lb]=MS_ST[s];const e=msEvidence(x);const h=msHow(x);const dd=dBetween(today,x.by);const k=MS_KIND[x.kind]||['',''];
-  document.getElementById('sheetIn').innerHTML=`<div class="tiny" style="color:${k[1]};font-weight:700">${k[0].toUpperCase()} MILESTONE</div><h2 style="margin-top:4px">${esc(x.label)}</h2>
+  document.getElementById('sheetIn').innerHTML=`<div class="tiny" style="color:${k[1]};font-weight:700">${k[0].toUpperCase()} MILESTONE</div><h2 style="margin-top:4px">${esc(msLabel(x))}</h2>
     <div class="msstat" style="border-color:${col}"><span style="color:${col};font-size:22px;font-weight:800">${ic}</span><div><b style="color:${col}">${s==='done'?'Achieved '+fmtLong(x.doneAt):lb}</b><div class="tiny muted">${s==='done'?'':dd>=0?`by ${fmtLong(x.by)} · ${dd} days left`:`was due ${fmtLong(x.by)}`}</div></div></div>
     <div class="msi"><span>Why it matters</span><p>${esc(msWhy(x))}</p></div>
     <div class="msi"><span>How to do it</span><p>${esc(h.text)}${h.wo?` <a href="#" onclick="openWo('${h.wo.id}');return false">${esc(h.wo.title)} · ${fmtD(h.wo.date)} ›</a>`:''}</p></div>
@@ -1106,6 +1112,39 @@ async function applySwimI1(b){
 async function skipSwimI1(){const st=JSON.parse(JSON.stringify(S.settings));const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,swimPlan:'i1-skipped'})}
 fetch('swim-i1.json').then(r=>r.ok?r.json():null).then(j=>{if(j){S.swimI1=j;if(S.tab==='review')render()}}).catch(()=>{});
 
+// ---------- plan review v6 (evidence-based fixes) — approve in Review
+const V6_FIX=[['Long runs','capped at 3 h and ~40 % of weekly running; fuelling practice in every long run over 85\''],['Marathon block','5 runs/week instead of 4 (bike → easy run); gentler ramp after Trakai'],['Triathlon block','a long run kept every Sunday so running fitness doesn\'t drop before Tallinn'],['Bike','20\' field test in the first tri week sets your bike zones'],['Strength','8\' lower-body + jumps added to upper-body days (running economy)'],['Base & builds','easy runs longer, long runs shorter — more even weeks'],['Race plans','splits and paces now follow your targets automatically'],['Tapers','2 weeks, volume −35–40 %, intensity kept']];
+const V6_MS=[['n9','2027-05-30','bike','Bike serviced, fitted and 3 rides done'],['n14','2027-05-28','bike','Bike 20\' field test done — bike zones set']];
+function v6Card(){
+  if(!S.settings||S.settings.planVersion>=6||S.settings.planV6==='skipped'||!S.v6)return '';
+  return `<div class="card sg"><div class="row between"><span class="status s-pending">Pending</span><span class="small muted">coach review</span></div>
+   <h3 style="margin-top:8px;font-size:16px">Season plan review — ${V6_FIX.length} fixes</h3>
+   <div class="phl">${V6_FIX.map(([a,b])=>`<div><b style="color:var(--accent)">${a}</b><span>${esc(b)}</span></div>`).join('')}</div>
+   <div class="tiny muted" style="margin-top:8px">From today on · sessions you or the coach already changed stay · includes the new swim plan</div>
+   <div class="row" style="margin-top:10px;gap:8px"><button class="btn p" onclick="applyV6(this)">Approve</button><button class="btn d" onclick="skipV6()">Reject</button><span id="v6Msg"></span></div></div>`;
+}
+async function applyV6(b){
+  const m=document.getElementById('v6Msg');b.disabled=true;m.innerHTML='<span class="small muted">Saving…</span>';
+  try{const now=new Date().toISOString();const touched={};let kept=0,skipped=0;
+    for(const [ws,nw] of Object.entries(S.v6.weeks)){const cur=S.weeks[ws];if(!cur){touched[ws]={...nw};continue}
+      const keep=cur.workouts.filter(x=>(x.changedBy&&x.changedBy!=='swim-i1')||x.date<today);kept+=keep.length;
+      const gen=nw.workouts.filter(x=>x.date>=today&&!keep.some(k=>k.date===x.date&&k.sport===x.sport));
+      const w={...cur,phase:nw.phase,focus:nw.focus,note:nw.note,workouts:[...keep,...gen].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0)};
+      if(validateWeek(w).length){skipped++;continue}touched[ws]=w}
+    const before={};Object.keys(touched).forEach(k=>{if(S.weeks[k]){const {_id,...bb}=S.weeks[k];before[k]=bb}});
+    await S.db.doc('history/plan-v6').set({at:now,suggestionId:'plan-v6',before,settingsBefore:S.settings});
+    for(const [k,w] of Object.entries(touched)){const {_id,...body}=w;await S.db.doc('weeks/'+k).set(body)}
+    const st=JSON.parse(JSON.stringify(S.settings));const ms=st.milestones||[];
+    V6_MS.forEach(([id,by,kind,label])=>{const i=ms.findIndex(x=>x.id===id);const v={id,by,kind,label};if(i>=0)ms[i]={...ms[i],...v};else ms.push({...v,doneAt:null})});
+    if(!st.swimPlan||st.swimPlan==='i1-skipped'){SWIM_I1_MS.forEach(([id,by,label])=>{const i=ms.findIndex(x=>x.id===id);if(i>=0)ms[i]={...ms[i],by,label,kind:'swim'}})}
+    const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,milestones:ms,swimPlan:'i1',planVersion:6,updatedAt:now});
+    m.innerHTML=`<span class="okmsg">Saved — ${Object.keys(touched).length} weeks updated${kept?`, ${kept} of your changes kept`:''}${skipped?`, ${skipped} weeks left as they were`:''}.</span>`;
+  }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`;b.disabled=false}
+}
+async function skipV6(){const st=JSON.parse(JSON.stringify(S.settings));const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,planV6:'skipped'})}
+fetch('plan-v6.json').then(r=>r.ok?r.json():null).then(j=>{if(j){S.v6=j;render()}}).catch(()=>{});
+function msLabel(x){if(x.kind!=='race')return x.label;const k=Object.keys(RT()).find(k=>RT()[k].date===x.by);const r=k&&RT()[k];if(!r)return x.label;const g=toSec(r.goal);return `${r.name} ${r.controlled?'≈ ':g?'sub-':''}${r.goal}`}
+
 function vReview(){
   const pend=S.suggestions.filter(s=>s.status==='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1);
   const past=S.suggestions.filter(s=>s.status!=='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1).slice(0,12);
@@ -1119,8 +1158,8 @@ function vReview(){
   const H=past.map(s=>{const cls=s.status==='approved'?'s-approved':s.status==='rejected'?'s-rejected':'s-partial';
     return `<div class="card"><div class="row between"><span class="status ${cls}">${esc(s.status)}</span><span class="small muted">${esc((s.createdAt||'').slice(0,10))}</span></div><div style="margin-top:6px;font-weight:600">${esc(s.headline||'')}</div>${s.decision&&s.decision.comment?`<div class="small muted" style="margin-top:4px">Your comment: ${esc(s.decision.comment)}</div>`:''}</div>`}).join('');
   const N=S.notes.slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1).slice(0,8).map(n=>`<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><span class="muted mono">${esc((n.createdAt||'').slice(0,10))}</span> ${esc(n.text)} ${n.status==='read'?'<span class="tiny st-done">· read by coach</span>':''}</div>`).join('');
-  const SWC=swimI1Card();
-  return `${SWC}${P||(SWC?'':'<div class="card empty">No pending changes. Next check: Sunday 19:00.</div>')}
+  const V6C=v6Card();const SWC=V6C?'':swimI1Card();
+  return `${V6C}${SWC}${P||(SWC||V6C?'':'<div class="card empty">No pending changes. Next check: Sunday 19:00.</div>')}
   <div class="card"><h2 style="font-size:17px">Note for the coach</h2><div class="small muted" style="margin:4px 0 8px">Sore calf, travel, bad nights with the baby, a race result — the Sunday check reads these before suggesting anything.</div>
     <textarea id="noteTxt" placeholder="e.g. Left knee a bit sore after Thursday's tempo"></textarea><div class="row" style="margin-top:8px"><button class="btn p" onclick="addNote()">Save note</button><span id="noteMsg"></span></div>${N?`<div style="margin-top:10px">${N}</div>`:''}</div>
   ${H?`<h2 class="sec">History</h2>${H}`:''}`;
