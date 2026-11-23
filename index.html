@@ -678,6 +678,7 @@ function parseStep(s,sport){
   if((type==='warm'||type==='cool')&&inten>2)inten=1;
   return {lbl,name:name.replace(/^./,c=>c.toUpperCase()),vol,rest,tok:tk[0]||'',zone,rir,txt,type,inten};
 }
+function stepCol(b,sp){return b.type==='warm'||b.type==='cool'?'#7b86b8':b.type==='drill'?'#9b7bf0':b.type==='ex'||b.type==='circuit'||b.type==='acc'?(SP[sp]||['','#888'])[1]:sp==='swim'&&b.inten<3?'#3987e5':icol(b.inten)}
 function stepSegs(b,sport){
   if(b.type==='info'||sport==='strength')return [];
   const pm=(b.tok&&paceMin(b.tok))||(sport==='bike'?2:6);
@@ -685,9 +686,9 @@ function stepSegs(b,sport){
   const rv=b.rest.match(/(\d+)\s*(″|'|s|m)/);const restM=rv?(rv[2]==='m'?(+rv[1])/1000*7:one(+rv[1],rv[2])):0;
   let m=b.vol.match(/^(\d+)×([\d.,]+)\s*(km|m|'|″|s|min)?/);
   if(m){const n=+m[1],w=one(parseFloat(m[2].replace(',','.')),m[3]||(sport==='swim'?'m':"'"));const out=[];
-    for(let i=0;i<n;i++){out.push({m:Math.max(w,.25),i:b.inten});if(i<n-1&&restM)out.push({m:restM,i:sport==='swim'?0.4:1,r:1})}return out}
-  m=b.vol.match(/^([\d.,]+)\s*(km|m|'|min)/);if(m)return [{m:one(parseFloat(m[1].replace(',','.')),m[2]),i:b.inten}];
-  if(b.type==='warm'||b.type==='cool')return [{m:sport==='swim'?4:8,i:1}];
+    for(let i=0;i<n;i++){out.push({m:Math.max(w,.25),i:b.inten,c:stepCol(b,sport)});if(i<n-1&&restM)out.push({m:restM,i:sport==='swim'?0.4:1,r:1})}return out}
+  m=b.vol.match(/^([\d.,]+)\s*(km|m|'|min)/);if(m)return [{m:one(parseFloat(m[1].replace(',','.')),m[2]),i:b.inten,c:stepCol(b,sport)}];
+  if(b.type==='warm'||b.type==='cool')return [{m:sport==='swim'?4:8,i:1,c:stepCol(b,sport)}];
   return [];
 }
 function profileSvg(x,{h=58,mini=false}={}){
@@ -696,7 +697,7 @@ function profileSvg(x,{h=58,mini=false}={}){
   const segs=x.steps.map(s=>stepSegs(parseStep(s,sp),sp)).flat().filter(s=>s.m>0);
   const tot=segs.reduce((a,s)=>a+s.m,0);if(!tot||segs.length<1)return '';
   const W=320,gap=segs.length>40?.6:1.5,usable=W-gap*(segs.length-1);let x0=0;
-  const bars=segs.map(s=>{const w=Math.max(.8,s.m/tot*usable);const hh=s.r?h*.14:h*(.22+.78*Math.min(5,s.i)/5);const r=`<rect x="${x0.toFixed(1)}" y="${(h-hh).toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}" rx="${Math.min(3,w/2)}" fill="${s.r?'rgba(255,255,255,.18)':icol(s.i)}"/>`;x0+=w+gap;return r}).join('');
+  const bars=segs.map(s=>{const w=Math.max(.8,s.m/tot*usable);const hh=s.r?h*.14:h*(.22+.78*Math.min(5,s.i)/5);const r=`<rect x="${x0.toFixed(1)}" y="${(h-hh).toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}" rx="${Math.min(3,w/2)}" fill="${s.r?'rgba(255,255,255,.18)':(s.c||icol(s.i))}"/>`;x0+=w+gap;return r}).join('');
   return `<svg class="prof${mini?' mini':''}" viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>`;
 }
 function stepsView(x){
@@ -707,7 +708,7 @@ function stepsView(x){
     if(/^goal$/i.test(b.lbl)){goal=b.txt;return}
     if(/^(at a glance|total)$/i.test(b.lbl))return;
     if(b.type==='info'){rows.push(`<div class="ts t-info" onclick="this.classList.toggle('open')"><div class="tsh"><span class="tsi">${esc(b.lbl)}</span><span class="tsx">›</span></div><div class="tsd">${fill(b.txt)}</div></div>`);return}
-    const col=b.type==='warm'||b.type==='cool'?'rgba(255,255,255,.22)':b.type==='drill'?'#9b7bf0':b.type==='ex'||b.type==='circuit'||b.type==='acc'?(SP[sp]||['','#888'])[1]:sp==='swim'&&b.inten<3?(SP.swim[1]):icol(b.inten);
+    const col=stepCol(b,sp);
     const pills=[];
     if(b.tok)pills.push(`<span class="pl pace">${fill('{'+b.tok+'}')}</span>`);else if(b.zone)pills.push(`<span class="pl pace">${esc(b.zone)}</span>`);
     if(b.rir)pills.push(`<span class="pl">${esc(b.rir)}</span>`);
