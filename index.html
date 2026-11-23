@@ -303,6 +303,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .chg{grid-template-columns:24px minmax(0,1fr)!important}.chg>div{min-width:0}
 .cl{overflow-wrap:anywhere}.why1{max-width:100%}
 html,body{overflow-x:hidden}
+.phl{display:grid;gap:6px;margin-top:10px}.phl div{display:grid;grid-template-columns:76px 1fr;gap:8px;font-size:13.5px}.phl b{color:var(--swim)}.phl span{color:var(--sub)}
 </style>
 </head>
 <body>
@@ -451,7 +452,7 @@ function render(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.tab));
   const nr=nextRace();
   document.getElementById('nextRace').innerHTML=nr?`${esc(nr.name.split(' ')[0])} in <b>${dBetween(today,nr.date)}</b> days`:'Season complete';
-  const pend=S.suggestions.filter(s=>s.status==='pending');
+  const pend=S.suggestions.filter(s=>s.status==='pending').concat(S.swimI1&&S.settings&&!S.settings.swimPlan?[{}]:[]);
   const b=document.getElementById('badge');b.textContent=pend.length;b.classList.toggle('hide',!pend.length);
   document.getElementById('pendingBanner').classList.toggle('hide',!pend.length||S.tab==='review');
   document.getElementById('pbN').textContent=pend.length===1?'1 plan update waiting for your approval':`${pend.length} plan updates waiting for your approval`;
@@ -1072,6 +1073,39 @@ function miniWeek(s){
   return `<div class="mw">${[...Array(7)].map((_,i)=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);
     return `<div class="${ch.has(d)?'chd':''} ${d<today?'past':''}"><span>${DOW[i].slice(0,2)}</span>${xs.length?xs.map(x=>`<i style="background:${(SP[x.sport]||['','#666'])[1]}" title="${esc(x.title)}">${esc((SP[x.sport]||['?'])[0][0])}</i>`).join(''):'<em>·</em>'}</div>`}).join('')}</div>`;
 }
+// ---------- one-off: swim plan for a 500 m+ crawl swimmer (approve in Review)
+const SWIM_I1_MS=[["n0","2026-11-29","CSS test: 400 m + 200 m timed — sets your swim paces"],["n2","2026-12-20","750 m front crawl non-stop — the race distance"],["n4","2027-01-31","1000 m non-stop, breathing every 3 strokes"],["n8","2027-03-31","CSS 5 s/100 m faster than the November test"],["n13","2027-04-30","1500 m non-stop"],["n15","2027-05-16","750 m with sighting at CSS + 5 s/100 m or faster"],["n19","2027-06-13","750 m in open water in a wetsuit, sighting"]];
+function swimI1Card(){
+  if(!S.settings||S.settings.swimPlan==='i1'||!S.swimI1)return '';
+  const wk=Object.entries(S.swimI1.weeks).filter(([ws])=>addD(ws,6)>=today);const n=wk.reduce((s,[,v])=>s+v.length,0);
+  const ph=[['Now – Dec','technique + 300s, CSS test this week'],['Jan','400s, 1000 m continuous'],['Feb – Mar','CSS intervals, 1000 m+ continuous'],['Apr – May','race-pace sets, 1500 m'],['Jun','750 m rehearsals + open water']];
+  return `<div class="card sg"><div class="row between"><span class="status s-pending">Pending</span><span class="small muted">swim plan</span></div>
+   <h3 style="margin-top:8px;font-size:16px">Swim plan rebuilt for 500 m+ crawl</h3>
+   <div class="phl">${ph.map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('')}</div>
+   <details style="margin-top:8px"><summary class="small">New swim milestones (${SWIM_I1_MS.length})</summary>${SWIM_I1_MS.map(([,by,l])=>`<div class="cl" style="padding:6px 0;border-top:1px solid var(--line)"><span class="tiny muted">by ${fmtD(by)}</span><br>${esc(l)}</div>`).join('')}</details>
+   <div class="tiny muted" style="margin-top:8px">${n} swim sessions replaced · crawl only · runs, strength and bike unchanged</div>
+   <div class="row" style="margin-top:10px;gap:8px"><button class="btn p" onclick="applySwimI1(this)">Approve</button><button class="btn d" onclick="skipSwimI1()">Reject</button><span id="swMsg"></span></div></div>`;
+}
+async function applySwimI1(b){
+  const m=document.getElementById('swMsg');b.disabled=true;m.innerHTML='<span class="small muted">Saving…</span>';
+  try{const now=new Date().toISOString();const M0=matchAll();const touched={};
+    for(const [ws,sw] of Object.entries(S.swimI1.weeks)){if(addD(ws,6)<today||!S.weeks[ws])continue;const w=JSON.parse(JSON.stringify(S.weeks[ws]));
+      const cur=w.workouts.filter(x=>x.sport==='swim').sort((a,b)=>a.date<b.date?-1:1);let ch=false;
+      cur.forEach((x,i)=>{const nb=sw[i];if(!nb||x.date<today||x.changedBy||['done','shifted'].includes((M0[x.id]||{}).st))return;
+        const j=w.workouts.findIndex(y=>y.id===x.id);w.workouts[j]={...nb,id:x.id,date:x.date,...(x.slot?{slot:x.slot}:{}),changedBy:'swim-i1',changedAt:today};ch=true});
+      if(ch)touched[ws]=w}
+    const before={};Object.keys(touched).forEach(k=>{const {_id,...b}=S.weeks[k];before[k]=b});
+    await S.db.doc('history/swim-i1').set({at:now,suggestionId:'swim-i1',before,settingsBefore:S.settings});
+    for(const [k,w] of Object.entries(touched)){const {_id,...body}=w;await S.db.doc('weeks/'+k).set(body)}
+    const st=JSON.parse(JSON.stringify(S.settings));const ms=st.milestones||[];
+    SWIM_I1_MS.forEach(([id,by,label])=>{const i=ms.findIndex(x=>x.id===id);const v={id,by,kind:'swim',label,doneAt:null};if(i>=0)ms[i]={...ms[i],...v};else ms.push(v)});
+    const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,milestones:ms,swimPlan:'i1',updatedAt:now});
+    m.innerHTML='<span class="okmsg">Saved.</span>';
+  }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`;b.disabled=false}
+}
+async function skipSwimI1(){const st=JSON.parse(JSON.stringify(S.settings));const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,swimPlan:'i1-skipped'})}
+fetch('swim-i1.json').then(r=>r.ok?r.json():null).then(j=>{if(j){S.swimI1=j;if(S.tab==='review')render()}}).catch(()=>{});
+
 function vReview(){
   const pend=S.suggestions.filter(s=>s.status==='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1);
   const past=S.suggestions.filter(s=>s.status!=='pending').sort((a,b)=>a.createdAt<b.createdAt?1:-1).slice(0,12);
@@ -1085,7 +1119,8 @@ function vReview(){
   const H=past.map(s=>{const cls=s.status==='approved'?'s-approved':s.status==='rejected'?'s-rejected':'s-partial';
     return `<div class="card"><div class="row between"><span class="status ${cls}">${esc(s.status)}</span><span class="small muted">${esc((s.createdAt||'').slice(0,10))}</span></div><div style="margin-top:6px;font-weight:600">${esc(s.headline||'')}</div>${s.decision&&s.decision.comment?`<div class="small muted" style="margin-top:4px">Your comment: ${esc(s.decision.comment)}</div>`:''}</div>`}).join('');
   const N=S.notes.slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1).slice(0,8).map(n=>`<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><span class="muted mono">${esc((n.createdAt||'').slice(0,10))}</span> ${esc(n.text)} ${n.status==='read'?'<span class="tiny st-done">· read by coach</span>':''}</div>`).join('');
-  return `${P||'<div class="card empty">No pending changes. Next check: Sunday 19:00.</div>'}
+  const SWC=swimI1Card();
+  return `${SWC}${P||(SWC?'':'<div class="card empty">No pending changes. Next check: Sunday 19:00.</div>')}
   <div class="card"><h2 style="font-size:17px">Note for the coach</h2><div class="small muted" style="margin:4px 0 8px">Sore calf, travel, bad nights with the baby, a race result — the Sunday check reads these before suggesting anything.</div>
     <textarea id="noteTxt" placeholder="e.g. Left knee a bit sore after Thursday's tempo"></textarea><div class="row" style="margin-top:8px"><button class="btn p" onclick="addNote()">Save note</button><span id="noteMsg"></span></div>${N?`<div style="margin-top:10px">${N}</div>`:''}</div>
   ${H?`<h2 class="sec">History</h2>${H}`:''}`;
