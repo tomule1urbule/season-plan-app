@@ -237,6 +237,63 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .mw{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:12px 0 4px}.mw>div{display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 0 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);min-height:62px}
 .mw>div.chd{border-color:var(--accent);background:rgba(198,244,50,.08)}.mw>div.past{opacity:.45}.mw span{font-size:11px;color:var(--muted)}
 .mw i{width:20px;height:20px;border-radius:7px;font-style:normal;font-size:10.5px;font-weight:800;color:#16142c;display:flex;align-items:center;justify-content:center}.mw em{color:var(--muted);font-style:normal;line-height:20px}
+
+/* ===== minimal + visual steps ===== */
+.prof{display:block;width:100%;height:58px;margin:14px 0 4px}
+.prof.mini{height:30px;margin:12px 0 0;opacity:.95}
+.sx{font-size:13px;font-weight:600}
+.wstat{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-top:8px;color:var(--sub);font-size:13.5px}
+.wstat b{font-family:"Bricolage Grotesque";font-size:20px;color:var(--text);font-weight:800;margin-right:2px}
+.goal1{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--text);background:rgba(198,244,50,.09);border:1px solid rgba(198,244,50,.28);border-radius:12px;padding:8px 11px;margin:10px 0 2px}
+.goal1 svg{flex:none;color:var(--accent)}
+.tl{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.ts{position:relative;background:rgba(255,255,255,.05);border-radius:14px;padding:11px 12px 11px 16px;cursor:pointer;overflow:hidden}
+.ts::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c,rgba(255,255,255,.2))}
+.ts.t-warm,.ts.t-cool,.ts.t-acc{background:rgba(255,255,255,.03)}
+.tsh{display:flex;align-items:center;gap:10px}
+.tsm{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0;flex:1}
+.tsk{font-size:12px;color:var(--muted);font-weight:600;min-width:62px}
+.tsv{font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;letter-spacing:-.01em;white-space:nowrap}
+.tsn{font-size:13.5px;color:var(--sub)}
+.tsn2{font-weight:650;font-size:14.5px;flex:1;min-width:0}
+.t-ex .tsm{flex-wrap:nowrap}.t-ex .tsv{font-size:16px;color:var(--strength)}
+.tsp{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.pl{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap}
+.pl.pace{background:color-mix(in srgb,var(--c) 22%,transparent)}.pl.pace b{color:var(--text)!important;font-weight:700}
+.pl.rest{color:var(--muted)}
+.tsx{color:var(--muted);font-size:16px;transition:transform .15s;margin-left:2px}
+.ts.open .tsx{transform:rotate(90deg)}
+.tsd{display:none;font-size:13.5px;color:var(--sub);margin-top:8px;line-height:1.45}
+.ts.open .tsd{display:block}
+.t-info{padding:8px 12px;background:transparent;border:1px dashed var(--line)}.t-info::before{display:none}.tsi{font-size:12.5px;color:var(--muted);font-weight:600;flex:1}
+.chs{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.chs span{font-size:12.5px;background:rgba(255,255,255,.07);border-radius:8px;padding:4px 8px}
+.acc{border-top:1px solid var(--line);padding:2px 0}
+.acc:first-of-type{margin-top:16px}
+.acc summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:12px 2px;font-weight:600;font-size:14.5px;color:var(--text)}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary::after{content:"+";color:var(--muted);font-size:18px;font-weight:400}
+.acc[open] summary::after{content:"–"}
+.acc .ab{padding:0 2px 12px;font-size:14px;color:var(--sub)}
+.acc .ab ul{margin:4px 0 0;padding-left:18px}.acc .ab li{margin:3px 0}
+.acc .ab .sub2{font-size:12px;color:var(--amber);font-weight:700;margin:10px 0 2px}
+.acc .ab .sub2:first-child{margin-top:0}
+.donebox{display:flex;gap:10px;align-items:center;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:9px 12px;margin-top:12px;font-size:13.5px}
+.wkc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);padding:12px 14px;margin-bottom:12px}
+.wkc summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer}
+.wkc summary::-webkit-details-marker{display:none}
+.wkc .ws{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.wkc .ws b{color:var(--text);font-weight:700}
+.wkc summary::after{content:"›";color:var(--muted);font-size:18px;transition:transform .15s}
+.wkc[open] summary::after{transform:rotate(90deg)}
+.wkc .wb{padding-top:10px}
+.wo{padding:11px 14px 11px 12px;align-items:center}
+.wo .h{gap:8px}
+.wo .one{display:none}
+.lnk{display:block;margin:4px auto 0;background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.blk .bx{display:none}.blk.open .bx{display:block}.blk{cursor:pointer}
+.sheet h2{font-size:23px;line-height:1.15}
+.sdot{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--c)}
+.sdot i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 </style>
 </head>
 <body>
@@ -426,7 +483,7 @@ function heroStats(w){
   if(nr){const gs=toSec(nr.goal);const need=gs&&nr.dist?vdotFrom(nr.dist,gs):null;const pct=need?Math.min(100,paces().vd/need*100):null;
     rr=`<div class="hs"><div class="hl"><span>${esc(nr.name.split(' ')[0])}</span><b>${dBetween(today,nr.date)} d</b></div>${pct!=null?`<div class="hb"><i style="width:${pct}%"></i></div><div class="hx">fitness ${Math.round(pct)} % of ${esc(nr.goal)}</div>`:`<div class="hx">${esc(nr.goal)}</div>`}</div>`}
   return `${plan?`<div class="hs"><div class="hl"><span>Run km</span><b>${Math.round(did)}<small>/${Math.round(plan)}</small></b></div><div class="hb"><i style="width:${plan?Math.min(100,did/plan*100):0}%;background:var(--run)"></i></div></div>`:''}
-    <div class="hs"><div class="hl"><span>Streak</span><b>${st}<small> in a row</small></b></div><div class="hx">${st>=10?'Unstoppable':st>=5?'Building a habit':st?'Keep it going':'Start today'}</div></div>${rr}`;
+    <div class="hs"><div class="hl"><span>Streak</span><b>${st}<small> in a row</small></b></div></div>${rr}`;
 }
 function motto(w,ring){
   if(w.weekStart>mondayOf(today))return `${ring.total} sessions ahead. One at a time.`;
@@ -439,7 +496,7 @@ function motto(w,ring){
   if(missed)return 'Missed one? No cramming — just nail the next one.';
   return 'Rest day. This is when the training turns into fitness.';
 }
-function heroViz(w){const r=weekRing(w);return `<div class="hv">${r.svg}<div class="hcol">${heroStats(w)}</div></div><div class="motto">${motto(w,r)}</div>`}
+function heroViz(w){const r=weekRing(w);return `<div class="hv">${r.svg}<div class="hcol">${heroStats(w)}</div></div>`}
 
 function ridgeSvg(w,doneDays){
   const L=7,W=360,H=86;const ws=[];for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);ws.push(xs.reduce((s,x)=>s+(x.key?2:1)+(x.sport==='race'?3:0),0))}
@@ -460,11 +517,11 @@ function heroToday(w){
   const doneDays=[0,1,2,3,4,5,6].map(i=>{const d=addD(w.weekStart,i);const xs=w.workouts.filter(x=>x.date===d);return d<=today&&xs.length&&xs.every(x=>['done','shifted'].includes((M[x.id]||{}).st))});
   const label=inWeek?'Today · '+fmtLong(day):'Week of '+fmtD(w.weekStart);
   let body;
-  if(!inWeek){body=`<h2>${esc(w.focus)}</h2><div class="lead">${esc(w.note||'')}</div>`}
+  if(!inWeek){body=`<h2>${esc(w.focus)}</h2>`}
   else if(todays.length){const x=todays.find(y=>y.key)||todays[0];const first=(x.steps&&x.steps.length)?(x.steps.length>=3?x.steps[1][1]:x.steps[0][1]):x.details;
     body=`<h2>${esc(x.title)}</h2><div class="meta">${x.dur?`<span><b>${x.dur}</b> min</span>`:''}${x.km?`<span><b>${x.km}</b> km</span>`:''}${todays.length>1?`<span>+ ${esc(todays.filter(y=>y!==x).map(y=>y.title).join(', '))}</span>`:''}</div>
-      ${(M[x.id]||{}).st==='done'?`<div class="lead"><b style="color:var(--good)">✓ Done</b> — ${(()=>{const a=M[x.id].act;return esc([a.km?(+a.km).toFixed(1)+' km':'',a.min?Math.round(a.min)+' min':'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · '))})()}. Nice work.</div>`:`<div class="lead">${fill(DI(x).summary||first||'')}</div>`}<button class="go" onclick="openWo('${x.id}')">Open session</button>`}
-  else body=`<h2>Rest day</h2><div class="lead">Recovery is where the training sticks.${nextW?` Next up: <b>${esc(nextW.title)}</b> on ${fmtLong(nextW.date)}.`:''}</div>${nextW?`<button class="go" onclick="openWo('${nextW.id}')">Preview next session</button>`:''}`;
+      ${(M[x.id]||{}).st==='done'?`<div class="lead"><b style="color:var(--good)">✓ Done</b> — ${(()=>{const a=M[x.id].act;return esc([a.km?(+a.km).toFixed(1)+' km':'',a.min?Math.round(a.min)+' min':'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · '))})()}</div>`:profileSvg(x,{h:30,mini:true})}<button class="go" onclick="openWo('${x.id}')">Open session</button>`}
+  else body=`<h2>Rest day</h2>${nextW?`<div class="lead">Next: <b>${esc(nextW.title)}</b> · ${fmtD(nextW.date)}</div><button class="go" onclick="openWo('${nextW.id}')">Preview</button>`:''}`;
   return `<section class="hero"><div class="when">${label}</div>${body}${heroViz(w)}</section>`;
 }
 function weekStrip(w){
@@ -481,7 +538,7 @@ function woCard(x){
   const first=(x.steps&&x.steps.length)?x.steps.map(s=>s[1]).filter((_,i,a)=>a.length<3||i===1||a.length===1).slice(0,1)[0]:x.details;
   return `<button class="wo" style="--c:${col}" onclick="openWo('${x.id}')"><span class="ic">${ICON[x.sport]||''}</span><div>
     <div class="h">${x.slot?`<span class="tag slot">${x.slot}</span>`:''}<span class="ttl">${esc(x.title)}</span>${x.key?'<span class="tag key">KEY</span>':''}${st}<span class="meta">${meta}</span></div>
-    <div class="one">${fill(DI(x).summary||first||'')}</div></div></button>`;
+    </div></button>`;
 }
 function vWeek(){
   M=matchAll();const L=weekList();if(S.weekIdx==null)S.weekIdx=curIdx();const w=L[S.weekIdx];if(!w)return '';
@@ -489,17 +546,17 @@ function vWeek(){
   const a=S.actuals[w.weekStart];
   let days='';
   for(let i=0;i<7;i++){const d=addD(w.weekStart,i);const ws=w.workouts.filter(x=>x.date===d);
-    days+=`<div class="day ${d===today?'today':''} ${d<today?'past':''}" id="d-${d}" style="scroll-margin-top:12px"><div class="dn"><div class="w">${DOW[i]}</div><div class="n">${parse(d).getDate()}</div></div><div>${ws.length?ws.map(woCard).join(''):'<div class="restday">Rest — recovery is training too</div>'}</div></div>`}
+    days+=`<div class="day ${d===today?'today':''} ${d<today?'past':''}" id="d-${d}" style="scroll-margin-top:12px"><div class="dn"><div class="w">${DOW[i]}</div><div class="n">${parse(d).getDate()}</div></div><div>${ws.length?ws.map(woCard).join(''):'<div class="restday">Rest</div>'}</div></div>`}
   const blk=BLOCKS.find(b=>w.weekStart>=mondayOf(b.from)&&w.weekStart<=b.to)||{};
   return `<div class="wknav"><button onclick="S.weekIdx=Math.max(0,S.weekIdx-1);render()" aria-label="Previous week">‹</button>
     <div class="t"><div class="d">${fmtD(w.weekStart)} – ${fmtD(addD(w.weekStart,6))}</div><div class="small muted">Week ${S.weekIdx+1} of ${L.length}${S.weekIdx!==curIdx()?` · <a href="#" onclick="S.weekIdx=curIdx();render();return false">this week</a>`:''}</div></div>
     <button onclick="S.weekIdx=Math.min(${L.length-1},S.weekIdx+1);render()" aria-label="Next week">›</button></div>
-  ${heroToday(w)}${weekStrip(w)}${addD(w.weekStart,6)>=today?`<button class="btn rpbtn" onclick="openReplan()"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg>My schedule changed — rearrange this week</button>`:''}
-  <div class="card"><div class="row wrapf"><span class="phase" style="background:${blk.col||'#333'}33;color:#eceef2;border-left:3px solid ${blk.col||'#555'}">${esc(blk.name||w.phase)}</span><span class="small muted">${esc(w.phase)}</span></div>
-    <h2 style="font-size:18px;margin-top:8px">${esc(w.focus)}</h2>${w.note?`<div class="note">${esc(w.note)}</div>`:''}
-    <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div>
+  ${heroToday(w)}${weekStrip(w)}
+  <details class="wkc"><summary><span class="phase" style="background:${blk.col||'#333'}33;color:#eceef2;border-left:3px solid ${blk.col||'#555'}">${esc(blk.name||w.phase)}</span><span class="ws"><b>${w.workouts.length}</b> sessions · <b>~${Math.round(run)}</b> km · <b>${hrs.toFixed(1)}</b> h</span></summary>
+    <div class="wb"><div style="font-weight:700">${esc(w.focus)}</div>${w.note?`<div class="note">${esc(w.note)}</div>`:''}
+    <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div></details>
   <div class="card">${days}</div>
-  <div class="small muted" style="text-align:center">Tap a session for the full workout, why it matters and coaching cues.</div>`;
+  ${addD(w.weekStart,6)>=today?`<button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
 }
 // ================================================================== REPLAN: rearrange a week around busy days
 const HARDK=new Set(['intervals','intervals-10k','threshold','cruise','hills','fartlek','hmp','mp','long','css','brick','bike-intervals','speed','swim-test']);
@@ -589,41 +646,125 @@ async function rpGo(){
   }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`}
 }
 
+// ================================================================== STEP VISUALS
+const INTC=['#7b86b8','#3fb8a8','#e8b73f','#ef7d3c','#e5508f'];
+const INTN=['Easy','Steady','Moderate','Hard','Very hard'];
+const icol=i=>INTC[Math.max(0,Math.min(4,Math.round(i)-1))];
+const TOKI={E:1,SE:1,M:2.4,MPG:2.6,SS:2,HMG:3,T:3.4,SC:3.4,'10KG':3.8,I:4.3,SF:4.3,R:5};
+function paceMin(t){const {P}=paces();const s=String(P[t]||'').match(/(\d+):(\d\d)/);return s?(+s[1]+s[2]/60):null}
+function stepType(l){l=l.toLowerCase();
+  if(/^(goal|at a glance|total|note it|fuel|before|t2)\b/.test(l))return 'info';
+  if(/warm/.test(l))return 'warm';if(/cool/.test(l))return 'cool';
+  if(/^circuit/.test(l))return 'circuit';
+  if(/^(core|run armour|finish|mobility)/.test(l))return 'acc';
+  if(/drill|^kick|^pull/.test(l))return 'drill';
+  return 'main'}
+const VOLRE=/(\d+\s*[×x]\s*(?:max(?:−2)?|[\d.,]+(?:[–-][\d.,]+)?)\s*(?:km|m\b|'|"|″|s\b|min)?(?:\s*\/\s*(?:side|leg|hand))?|\d+(?:[.,]\d+)?\s*(?:km|m)\b|\d+\s*(?:'|min\b))/;
+const RESTRE=/(\d+(?:[–-]\d+)?\s*(?:s\b|"|'|″)\s*(?:rest|jog|easy(?:\s+(?:jog|spin))?|walk(?:\/jog)?)|\d+\s*m\s+jog|rest\s+\d+(?:[–-]\d+)?\s*(?:s\b|"|'))/i;
+function parseStep(s,sport){
+  let lbl=String(s[0]||'').replace(/^\d+\s*·\s*/,'').trim();const txt=String(s[1]||'');
+  let type=stepType(lbl);if(sport==='strength'&&/^\d+\s*·/.test(s[0]))type='ex';
+  const parts=lbl.split(/\s*·\s*/);let name=parts[0],vol='';
+  for(let i=1;i<parts.length;i++){const m=parts[i].match(VOLRE);if(m&&!vol){vol=m[1].trim();const rest=parts[i].replace(m[1],'').trim();if(rest)name=(type==='main'||type==='drill')&&!/^(main|drill)$/i.test(name)?name:rest}else if(!m)name=parts[i]}
+  if(!vol&&type!=='acc'&&type!=='info'&&type!=='circuit'){const m=txt.match(VOLRE);if(m&&txt.indexOf(m[1])<40)vol=m[1].trim()}
+  vol=vol.replace(/(\d)\s*x\s*/,'$1×').replace(/"/g,'″').replace(/[.,]+$/,'');
+  const rm=txt.match(RESTRE);const rest=rm?rm[1].replace(/^rest\s+/i,'').replace(/"/g,'″').replace(/\s*rest$/i,''):'';
+  const tk=[...txt.matchAll(TOK)].map(a=>a[1]);
+  const zone=(txt.match(/Zone\s*\d(?:[–-]\d)?/i)||[''])[0];
+  const rir=(txt.match(/RIR\s*\d(?:[–-]\d)?/)||[''])[0];
+  let ti=tk.length?Math.max(...tk.map(k=>TOKI[k]||1)):0;let ki=0;const t=lbl+' '+txt;
+  if(/max hill|sprint/i.test(t))ki=5;else if(/zone [45]/i.test(t))ki=4.3;else if(/zone 2[–-]3/i.test(t))ki=2.6;else if(/zone 3|rpe 6|race effort|strong|fast|brisk/i.test(t))ki=3.4;else if(/zone 2/i.test(t)&&!/zone 1/i.test(t))ki=2;else if(/steady/i.test(t)&&!/easy/i.test(t))ki=2;
+  let inten=Math.max(ti,ki);if(!inten)inten=type==='warm'||type==='cool'?1:type==='drill'?1.6:type==='info'?0:sport==='swim'?2.4:sport==='bike'?2:1.2;
+  if((type==='warm'||type==='cool')&&inten>2)inten=1;
+  return {lbl,name:name.replace(/^./,c=>c.toUpperCase()),vol,rest,tok:tk[0]||'',zone,rir,txt,type,inten};
+}
+function stepSegs(b,sport){
+  if(b.type==='info'||sport==='strength')return [];
+  const pm=(b.tok&&paceMin(b.tok))||(sport==='bike'?2:6);
+  const one=(q,u)=>u==='km'?q*pm:u==='m'?(sport==='swim'?q/100*2.5:q/1000*pm):u==="'"||u==='min'?q:(u==='″'||u==='s')?q/60:0;
+  const rv=b.rest.match(/(\d+)\s*(″|'|s|m)/);const restM=rv?(rv[2]==='m'?(+rv[1])/1000*7:one(+rv[1],rv[2])):0;
+  let m=b.vol.match(/^(\d+)×([\d.,]+)\s*(km|m|'|″|s|min)?/);
+  if(m){const n=+m[1],w=one(parseFloat(m[2].replace(',','.')),m[3]||(sport==='swim'?'m':"'"));const out=[];
+    for(let i=0;i<n;i++){out.push({m:Math.max(w,.25),i:b.inten});if(i<n-1&&restM)out.push({m:restM,i:sport==='swim'?0.4:1,r:1})}return out}
+  m=b.vol.match(/^([\d.,]+)\s*(km|m|'|min)/);if(m)return [{m:one(parseFloat(m[1].replace(',','.')),m[2]),i:b.inten}];
+  if(b.type==='warm'||b.type==='cool')return [{m:sport==='swim'?4:8,i:1}];
+  return [];
+}
+function profileSvg(x,{h=58,mini=false}={}){
+  if(x.sport==='strength'||!x.steps)return '';
+  const sp=x.sport==='brick'?'bike':x.sport==='race'?'run':x.sport;
+  const segs=x.steps.map(s=>stepSegs(parseStep(s,sp),sp)).flat().filter(s=>s.m>0);
+  const tot=segs.reduce((a,s)=>a+s.m,0);if(!tot||segs.length<1)return '';
+  const W=320,gap=segs.length>40?.6:1.5,usable=W-gap*(segs.length-1);let x0=0;
+  const bars=segs.map(s=>{const w=Math.max(.8,s.m/tot*usable);const hh=s.r?h*.14:h*(.22+.78*Math.min(5,s.i)/5);const r=`<rect x="${x0.toFixed(1)}" y="${(h-hh).toFixed(1)}" width="${w.toFixed(1)}" height="${hh.toFixed(1)}" rx="${Math.min(3,w/2)}" fill="${s.r?'rgba(255,255,255,.18)':icol(s.i)}"/>`;x0+=w+gap;return r}).join('');
+  return `<svg class="prof${mini?' mini':''}" viewBox="0 0 ${W} ${h}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>`;
+}
+function stepsView(x){
+  const sp=x.sport==='brick'?'bike':x.sport==='race'?'run':x.sport;
+  const raw=(x.steps&&x.steps.length?x.steps:[['Session',x.details||'']]);
+  let goal='';const rows=[];
+  raw.forEach(s=>{const b=parseStep(s,sp);
+    if(/^goal$/i.test(b.lbl)){goal=b.txt;return}
+    if(/^(at a glance|total)$/i.test(b.lbl))return;
+    if(b.type==='info'){rows.push(`<div class="ts t-info" onclick="this.classList.toggle('open')"><div class="tsh"><span class="tsi">${esc(b.lbl)}</span><span class="tsx">›</span></div><div class="tsd">${fill(b.txt)}</div></div>`);return}
+    const col=b.type==='warm'||b.type==='cool'?'rgba(255,255,255,.22)':b.type==='drill'?'#9b7bf0':b.type==='ex'||b.type==='circuit'||b.type==='acc'?(SP[sp]||['','#888'])[1]:sp==='swim'&&b.inten<3?(SP.swim[1]):icol(b.inten);
+    const pills=[];
+    if(b.tok)pills.push(`<span class="pl pace">${fill('{'+b.tok+'}')}</span>`);else if(b.zone)pills.push(`<span class="pl pace">${esc(b.zone)}</span>`);
+    if(b.rir)pills.push(`<span class="pl">${esc(b.rir)}</span>`);
+    if(b.rest)pills.push(`<span class="pl rest"><svg viewBox="0 0 12 12" width="9" height="9"><rect x="2" y="2" width="2.6" height="8" rx="1" fill="currentColor"/><rect x="7.4" y="2" width="2.6" height="8" rx="1" fill="currentColor"/></svg>${esc(b.rest)}</span>`);
+    let chips='';
+    if(b.type==='circuit'||b.type==='acc'){const items=b.txt.split(/\s+—\s+/)[0].split(/\s*(?:·|\+)\s*/).map(s=>s.replace(/"/g,'″'));chips=`<div class="chs">${items.map(i=>`<span>${esc(i)}</span>`).join('')}</div>`}
+    const big=b.vol||(b.type==='circuit'?b.lbl:b.name);const small=b.vol?b.name:(b.type==='circuit'?'':'');
+    rows.push(`<div class="ts t-${b.type}" style="--c:${col}" onclick="this.classList.toggle('open')">
+      <div class="tsh"><div class="tsm">${b.type==='ex'?`<span class="tsn2">${esc(b.name)}</span>`:`<span class="tsk">${esc(b.type==='warm'?'Warm-up':b.type==='cool'?'Cool-down':b.type==='drill'?'Drill':b.type==='acc'?b.name:b.type==='circuit'?'Circuit':(b.name&&!/^(main|main set|run|ride|session)$/i.test(b.name)?b.name:'Main'))}</span>`}
+        <span class="tsv">${b.type==='ex'?esc(b.vol||''):b.type==='acc'?'':esc(b.type==='drill'&&b.vol?b.vol:(b.vol||''))}</span>${b.type==='drill'&&b.name&&!/^drill$/i.test(b.name)?`<span class="tsn">${esc(b.name)}</span>`:''}</div>
+        <div class="tsp">${pills.join('')}<span class="tsx">›</span></div></div>${chips}
+      <div class="tsd">${fill(b.txt)}</div></div>`)});
+  return {goal,html:`<div class="tl">${rows.join('')}</div>`};
+}
+function intLabel(x){if(x.sport==='strength')return '';const sp=x.sport==='brick'?'bike':x.sport==='race'?'run':x.sport;const mx=Math.max(0,...(x.steps||[]).map(s=>parseStep(s,sp)).filter(b=>b.type!=='info').map(b=>b.inten));return mx?`<span class="sx" style="color:${icol(mx)}">● ${INTN[Math.max(0,Math.min(4,Math.round(mx)-1))]}</span>`:''}
+
 function findWo(id){for(const w of weekList())for(const x of w.workouts||[])if(x.id===id)return x}
 function openWo(id){
   const x=findWo(id);if(!x)return;const [lbl,col]=SP[x.sport]||['',"#555"];const K=KIND[x.kind]||KIND[x.sport]||{};
   const m=matchAll()[id]||{};const a=m.act;
-  const steps=(x.steps&&x.steps.length?x.steps:[['Session',x.details]]).map(s=>`<div class="step"><div class="k">${esc(s[0])}</div><div>${fill(s[1])}</div></div>`).join('');
   const D=DI(x),DK_=DK(x);const why=D.role||x.why||K.why,feel=x.feel||K.feel,cues=x.cues||K.cues,tired=x.tired||K.tired,fuel=x.fuel||K.fuel;
   const {P}=paces();
-  const toks=[...new Set(((x.steps||[]).map(s=>s[1]).join(' ')+x.details).match(TOK)||[])].map(t=>t.slice(1,-1));
+  const toks=[...new Set(((x.steps||[]).map(s=>s[1]).join(' ')+(x.details||'')).match(TOK)||[])].map(t=>t.slice(1,-1));
   const names={E:'Easy',M:'Marathon (fitness)',T:'Threshold',I:'Interval',R:'Repetition','10KG':'10K goal',HMG:'Half goal',MPG:'Marathon goal',SE:'Swim easy',SS:'Swim steady',SC:'Swim CSS',SF:'Swim fast'};
+  const sv=stepsView(x);const goal=sv.goal||'';
+  const km=x.km?x.km+' km':(x.sport==='run'&&x.dur?'~'+Math.round(estKm(x))+' km':'');
+  const acc=(t,body,open)=>body?`<details class="acc"${open?' open':''}><summary>${t}</summary><div class="ab">${body}</div></details>`:'';
+  const ul=l=>l&&l.length?`<ul>${l.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:'';
+  const sub=(t,b)=>b?`<div class="sub2">${t}</div>${b}`:'';
+  const whyB=[why?esc(why):'',D.role&&K.why&&D.role!==K.why?`<div style="margin-top:6px">${esc(K.why)}</div>`:'',D.context?`<div style="margin-top:6px" class="muted">${esc(D.context)}</div>`:''].join('');
+  const feelB=[feel?sub('Effort',esc(feel)):'',DK_.hr?sub('Heart rate',esc(DK_.hr)):'',DK_.success?sub('A good session looks like',esc(DK_.success)):''].join('');
+  const tipsB=[cues&&cues.length?sub('Cues',ul(cues)):'',DK_.mistakes&&DK_.mistakes.length?sub('Avoid',ul(DK_.mistakes)):'',DK_.garmin?sub('On your Garmin',esc(DK_.garmin)):''].join('');
+  const paceB=toks.length?`<div class="kv">${toks.map(t=>`<span class="k">${names[t]}</span><span class="mono">${P[t]}${unitOf(t)}</span>`).join('')}</div><div class="tiny muted" style="margin-top:6px">From VDOT ${paces().vd.toFixed(1)} and race targets · swim from CSS ${mmss(css())}/100 m.</div>`:'';
   document.getElementById('sheetIn').innerHTML=`
-   <div class="row" style="gap:6px;margin-bottom:6px"><span class="tag" style="background:${col};color:#111">${lbl.toUpperCase()}</span>${x.key?'<span class="tag key">KEY SESSION</span>':''}${x.slot?`<span class="tag slot">${x.slot}</span>`:''}</div>
-   <h2>${esc(x.title)}</h2><div class="small muted" style="margin-top:2px">${fmtLong(x.date)}</div>
-   <div class="tiles" style="margin-top:12px"><div class="tile"><div class="v">${x.dur?x.dur+"'":'—'}</div><div class="l">duration</div></div><div class="tile"><div class="v">${x.km?x.km+' km':(x.sport==='run'&&x.dur?'~'+Math.round(estKm(x))+' km':'—')}</div><div class="l">distance</div></div><div class="tile"><div class="v" style="font-size:14px">${esc((feel||'').split('·')[0]||'—')}</div><div class="l">intensity</div></div></div>
-   ${a?`<div class="box" style="border-left:3px solid var(--good)"><div class="bt">Garmin · ${m.st==='shifted'?'done on '+fmtD(a.date):'done'}</div>${esc(a.name||'')} — ${a.km?(+a.km).toFixed(2)+' km · ':''}${a.min?Math.round(a.min)+"' · ":''}${a.pace?esc(a.pace)+' · ':''}${a.avgHr?a.avgHr+' bpm':''}</div>`:m.st==='missed'?'<div class="box" style="border-left:3px solid var(--crit)"><div class="bt">Garmin</div>Not found in Garmin for this day.</div>':''}
-   ${D.summary?`<div class="box"><div class="bt">The session in one line</div>${fill(D.summary)}</div>`:''}
-   ${D.context?`<div class="box"><div class="bt">Where it fits</div>${esc(D.context)}</div>`:''}
-   <div class="box"><div class="bt">Why it matters</div>${esc(why||'')}${D.role&&K.why&&D.role!==K.why?`<div class="small" style="color:var(--sub);margin-top:6px">${esc(K.why)}</div>`:''}</div>
-   <div class="box"><div class="bt">The session</div>${steps}</div>
-   ${toks.length?`<div class="box"><div class="bt">Your paces today</div><div class="kv">${toks.map(t=>`<span class="k">${names[t]}</span><span class="mono">${P[t]}${unitOf(t)}</span>`).join('')}</div><div class="tiny muted" style="margin-top:6px">Running from VDOT ${paces().vd.toFixed(1)} and race targets · swimming from your CSS ${mmss(css())}/100 m.</div></div>`:''}
-   ${x.sport==='swim'?drillGuide(x):''}
-   ${feel?`<div class="box"><div class="bt">How it should feel</div>${esc(feel)}</div>`:''}
-   ${DK_.hr?`<div class="box"><div class="bt">Heart rate</div>${esc(DK_.hr)}</div>`:''}
-   ${DK_.success?`<div class="box"><div class="bt">A good session looks like</div>${esc(DK_.success)}</div>`:''}
-   ${DK_.mistakes&&DK_.mistakes.length?`<div class="box"><div class="bt">Avoid</div><ul>${DK_.mistakes.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:''}
-   ${DK_.garmin?`<div class="box"><div class="bt">On your Garmin</div>${esc(DK_.garmin)}</div>`:''}
-   ${cues&&cues.length?`<div class="box"><div class="bt">Coach cues</div><ul>${cues.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></div>`:''}
-   ${fuel?`<div class="box"><div class="bt">Fuelling</div>${esc(fuel)}</div>`:''}
-   ${tired?`<div class="box"><div class="bt">Tired or short on time?</div>${esc(tired)}</div>`:''}
-   ${x.changedBy?`<div class="tiny muted" style="margin-top:10px">Updated ${esc(x.changedAt||'')} through an approved suggestion.</div>`:''}`;
+   <div class="row" style="gap:8px;margin-bottom:6px"><span class="sdot" style="--c:${col}"><i></i>${lbl}</span>${x.key?'<span class="tag key">KEY</span>':''}${x.slot?`<span class="tag slot">${x.slot}</span>`:''}</div>
+   <h2>${esc(x.title)}</h2>
+   <div class="wstat"><span class="muted">${fmtLong(x.date)}</span></div>
+   <div class="wstat">${x.dur?`<span><b>${x.dur}</b>min</span>`:''}${km?`<span><b>${km.replace(' km','')}</b>km</span>`:''}${intLabel(x)}</div>
+   ${profileSvg(x)}
+   ${goal?`<div class="goal1"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>${esc(goal.replace(/^Phase goal:\s*/i,''))}</div>`:''}
+   ${a?`<div class="donebox"><b style="color:var(--good)">✓</b><div>${m.st==='shifted'?'Done on '+fmtD(a.date):'Done'} · ${[a.km?(+a.km).toFixed(2)+' km':'',a.min?Math.round(a.min)+"'":'',a.pace?esc(a.pace):'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · ')}</div></div>`:m.st==='missed'?'<div class="donebox" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)"><b style="color:var(--crit)">✕</b><div>Not found in Garmin for this day</div></div>':''}
+   ${sv.html}
+   <div class="tiny muted" style="text-align:center;margin-top:8px">Tap a step for details</div>
+   ${acc('Why this session',whyB)}
+   ${acc('How it should feel',feelB)}
+   ${acc('Your paces',paceB)}
+   ${x.sport==='swim'?acc('Swim guide',drillGuide(x)):''}
+   ${acc('Coach tips',tipsB)}
+   ${acc('Fuelling',fuel?esc(fuel):'')}
+   ${acc('Tired or short on time?',tired?esc(tired):'')}
+   ${x.changedBy?`<div class="tiny muted" style="margin-top:12px">Updated ${esc(x.changedAt||'')}.</div>`:''}`;
   document.getElementById('ov').classList.add('on');const sh=document.getElementById('sheet');sh.classList.add('on');sh.scrollTop=0;
 }
 const DRILLS=[['bubbles','Bubbles','Hum out all your air under water, then turn your head to breathe in.'],['glide','Push & glide','Push off the wall, arms stretched, face down, and float.'],['kickboard','Kick with a board','Small quick kicks from the hips, ankles floppy.'],['side kick','Side kick','On your side, bottom arm forward, roll your face up to breathe.'],['catch-up','Catch-up','One hand waits in front until the other touches it.'],['6-kick','6-kick switch','6 kicks on your side, one stroke to switch sides.'],['pull buoy','Pull buoy','Foam float between the thighs; arms only.'],['sighting','Sighting','Lift just the eyes forward every 6th stroke, then breathe to the side.']];
 function drillGuide(x){const t=((x.steps||[]).map(s=>s[1]).join(' ')).toLowerCase();const used=DRILLS.filter(d=>t.includes(d[0]));
   const z=!/\{S[ESCF]\}/.test((x.steps||[]).map(s=>s[1]).join(' '))?'':`<div class="kv" style="margin-top:6px"><span class="k">Easy</span><span class="mono">${paces().P.SE}/100 m</span><span class="k">Steady</span><span class="mono">${paces().P.SS}/100 m</span><span class="k">CSS (threshold)</span><span class="mono">${paces().P.SC}/100 m</span><span class="k">Fast</span><span class="mono">${paces().P.SF}/100 m</span></div>`;
-  return `<div class="box"><div class="bt">Swim guide</div><div class="small">Rest = time standing at the wall between reps. Breaststroke or standing is always fine when you need a breather. On Garmin choose Pool Swim and set the pool length first.</div>${z}${used.length?`<ul style="margin-top:8px">${used.map(d=>`<li><b>${d[1]}</b> — ${d[2]}</li>`).join('')}</ul>`:''}</div>`}
+  return `<div><div class="small">Rest = time standing at the wall between reps. Breaststroke or standing is always fine when you need a breather. On Garmin choose Pool Swim and set the pool length first.</div>${z}${used.length?`<ul style="margin-top:8px">${used.map(d=>`<li><b>${d[1]}</b> — ${d[2]}</li>`).join('')}</ul>`:''}</div>`}
 function closeSheet(){document.getElementById('ov').classList.remove('on');document.getElementById('sheet').classList.remove('on')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 
@@ -667,20 +808,20 @@ function vSeason(){
   const L=weekList();const ci=curIdx();const {vd}=paces();
   const blocks=BLOCKS.map(b=>{const tot=dBetween(b.from,b.to)+1;const el=Math.max(0,Math.min(tot,dBetween(b.from,today)+1));const cur=today>=b.from&&today<=b.to;
     const wks=L.filter(w=>w.weekStart>=mondayOf(b.from)&&w.weekStart<=b.to).length;
-    return `<div class="blk ${cur?'cur':''}"><div class="rail" style="background:${b.col}"></div><div><div class="row between"><b class="t1" style="font-family:"Bricolage Grotesque";font-size:15.5px">${esc(b.name)}</b><span class="small muted mono">${fmtD(b.from)} – ${fmtD(b.to)} · ${wks} wk</span></div>
-      <div class="small" style="color:var(--sub);margin-top:3px">${esc(b.why)}</div><div class="row wrapf" style="gap:6px;margin-top:6px">${b.targets.map(t=>`<span class="chip" style="padding:2px 8px;font-size:11.5px">${esc(t)}</span>`).join('')}</div>
+    return `<div class="blk ${cur?'cur':''}" onclick="this.classList.toggle('open')"><div class="rail" style="background:${b.col}"></div><div><div class="row between"><b class="t1" style="font-family:"Bricolage Grotesque";font-size:15.5px">${esc(b.name)}</b><span class="small muted mono">${fmtD(b.from)} – ${fmtD(b.to)} · ${wks} wk</span></div>
+      <div class="bx"><div class="small" style="color:var(--sub);margin-top:3px">${esc(b.why)}</div><div class="row wrapf" style="gap:6px;margin-top:6px">${b.targets.map(t=>`<span class="chip" style="padding:2px 8px;font-size:11.5px">${esc(t)}</span>`).join('')}</div></div>
       ${el>0?`<div class="prog"><i style="width:${el/tot*100}%"></i></div><div class="tiny muted" style="margin-top:3px">${el>=tot?'Completed':Math.round(el/tot*100)+'% through'}</div>`:''}</div></div>`}).join('');
   const races=RACE_ORDER.map(k=>raceCard(k,vd)).join('');
   const ms=(S.settings&&S.settings.milestones)||[];
   const msH=ms.slice().sort((a,b)=>a.by<b.by?-1:1).map(x=>{const late=!x.doneAt&&x.by<today;return `<label class="ms ${x.doneAt?'done':''}"><input type="checkbox" ${x.doneAt?'checked':''} onchange="toggleMs('${esc(x.id)}',this.checked)"><span class="lb">${esc(x.label)}<span class="tiny muted"> · ${esc(x.kind)}</span></span><span class="tiny mono ${late?'st-miss':'muted'}">${x.doneAt?'✓ '+fmtD(x.doneAt):fmtD(x.by)}</span></label>`}).join('');
-  return `<div class="card"><div class="row between"><h2 style="font-size:17px">Season roadmap</h2><span class="tiny muted">planned hours / week · tap a bar</span></div>
+  return `<div class="card"><div class="row between"><h2 style="font-size:17px">Season roadmap</h2><span class="tiny muted">hours / week</span></div>
      <div class="legend" style="margin:10px 0 4px">${SPORTS.map(s=>`<span><i style="background:${SP[s][1]}"></i>${SP[s][0]}</span>`).join('')}<span><i style="background:var(--accent)"></i>Race</span></div>
      ${roadmap()}</div>
    <div class="card"><h2 style="font-size:17px;margin-bottom:4px">Training blocks</h2>${blocks}</div>
    <h2 class="sec">Races & targets</h2>${races}
-   <div class="card"><div class="row between"><h2 style="font-size:17px">Milestones</h2><span class="small muted">${ms.filter(x=>x.doneAt).length}/${ms.length} done</span></div><div class="tiny muted" style="margin:4px 0 6px">Tick when achieved. The Sunday check moves targets as you progress — you approve.</div>${msH}</div>
+   <div class="card"><div class="row between"><h2 style="font-size:17px">Milestones</h2><span class="small muted">${ms.filter(x=>x.doneAt).length}/${ms.length} done</span></div>${msH}</div>
    ${pacesCard()}
-   <div class="card small muted"><b style="color:var(--text)">Plan rules</b><br>Max 7 workouts / week · max 1 day / week with 2 workouts (AM/PM) · a brick (bike→run) counts as one · race days fixed · changes only via approved suggestions.<br><br><b style="color:var(--text)">Why weekly and not 10-day cycles?</b> With the 7-per-week cap a 10-day cycle fits fewer sessions and pushes long sessions onto weekdays. If your recovery data says you need more space between hard days, the Sunday check can propose 10-day cycles for a block.</div>`;
+   <details class="card small muted"><summary style="font-weight:600;color:var(--text)">Plan rules</summary><br>Max 7 workouts / week · max 1 day / week with 2 workouts (AM/PM) · a brick (bike→run) counts as one · race days fixed · changes only via approved suggestions.<br><br><b style="color:var(--text)">Why weekly and not 10-day cycles?</b> With the 7-per-week cap a 10-day cycle fits fewer sessions and pushes long sessions onto weekdays. If your recovery data says you need more space between hard days, the Sunday check can propose 10-day cycles for a block.</details>`;
 }
 function raceCard(k,vd){
   const r=RT()[k];if(!r)return '';const meta=RACE_META[k]||{};const dd=dBetween(today,r.date);
@@ -696,9 +837,9 @@ function raceCard(k,vd){
   return `<div class="card"><div class="race"><div class="cd"><div class="n">${dd>=0?dd:'✓'}</div><div class="l">${dd>=0?'days':'done'}</div></div><div>
     <div class="row between"><h3>${esc(r.name)}</h3><span class="small muted">${fmtD(r.date)}</span></div>
     <div class="row" style="gap:10px;margin-top:3px"><span class="goal">${r.controlled?'≈ ':gs?'sub-':''}${esc(r.goal)}</span><span class="chip" style="padding:2px 8px">${esc(meta.tag||'')}</span></div>
-    ${res}<div class="small muted" style="margin-top:6px">${esc(meta.note||'')}</div>
+    ${res}
     ${gauge}${pred&&!r.controlled?`<div class="tiny muted" style="margin-top:4px">Current-fitness prediction <b class="mono" style="color:var(--text)">${pred}</b></div>`:''}
-    <div class="row" style="gap:14px;margin-top:8px"><a href="#" class="small" onclick="editTarget('${k}');return false">✎ Change target</a>${rw?`<a href="#" class="small" onclick="openWo('${rw.id}');return false">Race plan ›</a>`:''}${hist?`<details style="display:inline"><summary>Target history (${(r.history||[]).length})</summary>${hist}</details>`:''}</div>
+    <div class="row" style="gap:14px;margin-top:8px"><a href="#" class="small" onclick="editTarget('${k}');return false">✎ Change target</a>${rw?`<a href="#" class="small" onclick="openWo('${rw.id}');return false">Race plan ›</a>`:''}${hist||meta.note?`<details style="display:inline"><summary>More</summary>${meta.note?`<div class="small muted" style="margin:6px 0">${esc(meta.note)}</div>`:''}${hist}</details>`:''}</div>
   </div></div></div>`;
 }
 async function toggleMs(id,on){
@@ -1080,7 +1221,7 @@ function refreshCard(){const r=refreshState();
 const VCOL={good:'var(--good)',watch:'var(--warn)',act:'var(--crit)',green:'var(--good)',amber:'var(--warn)',red:'var(--crit)',ahead:'var(--good)','on track':'var(--good)',behind:'var(--warn)',unlikely:'var(--crit)'};
 const VLBL={good:'Good',watch:'Watch',act:'Act'};
 function insCard(x){return `<div class="ins" style="border-left-color:${VCOL[x.verdict]||'var(--line)'}"><div class="row between" style="gap:8px"><span class="tiny muted">${esc(x.area)}</span><span class="vtag" style="color:${VCOL[x.verdict]}">${VLBL[x.verdict]||esc(x.verdict||'')}</span></div>
-  <h3>${esc(x.title)}</h3><div class="fd">${esc(x.finding||'')}</div>${x.meaning?`<p>${esc(x.meaning)}</p>`:''}${x.action?`<div class="act"><b>Do:</b> ${esc(x.action)}</div>`:''}</div>`}
+  <h3>${esc(x.title)}</h3><div class="fd">${esc(x.finding||'')}</div>${x.meaning||x.action?`<details><summary class="tiny">More</summary>${x.meaning?`<p>${esc(x.meaning)}</p>`:''}${x.action?`<div class="act"><b>Do:</b> ${esc(x.action)}</div>`:''}</details>`:''}</div>`}
 // ---------- small visuals
 function spark(pts,{col='var(--accent)',band=null,h=44,w=150,dots=false}={}){
   pts=pts.filter(p=>p.v!=null&&!isNaN(p.v));if(pts.length<2)return `<div class="tiny muted" style="height:${h}px;display:flex;align-items:center">not enough data yet</div>`;
@@ -1146,7 +1287,7 @@ function vGarmin(){
         ${pct!=null?`<div class="bar"><i style="width:${pct}%;background:${VDOT_DOT[x.verdict]||'var(--accent)'}"></i></div><div class="row between tiny"><span style="color:${VDOT_DOT[x.verdict]||'var(--sub)'}">● ${esc(x.verdict||'')}</span><span class="muted">${per!=null&&per>0?`needs +${r1(per,2)} VDOT/wk`:'fitness already there'}</span></div>`:x.verdict?`<div class="tiny" style="color:${VDOT_DOT[x.verdict]}">● ${esc(x.verdict)}</div>`:''}</div>`}).join('')}</div>`;
   // coach notes
   const secs=A&&(A.sections||[]).length?A.sections:E.out;
-  const notes=secs.length?`<div class="card"><b>Coach notes</b>${secs.map(x=>`<details class="cn"><summary><i style="background:${VCOL[x.verdict]}"></i><div><div class="t">${esc(x.title)}</div>${x.action?`<div class="a">${esc(x.action)}</div>`:''}</div></summary><div class="fd2">${esc(x.finding||'')}</div>${x.meaning?`<div class="small muted" style="margin-top:6px">${esc(x.meaning)}</div>`:''}</details>`).join('')}</div>`:'';
+  const notes=secs.length?`<div class="card"><b>Coach notes</b>${secs.map(x=>`<details class="cn"><summary><i style="background:${VCOL[x.verdict]}"></i><div><div class="t">${esc(x.title)}</div></div></summary>${x.action?`<div class="a" style="margin-left:19px">${esc(x.action)}</div>`:''}<div class="fd2">${esc(x.finding||'')}</div>${x.meaning?`<div class="small muted" style="margin-top:6px">${esc(x.meaning)}</div>`:''}</details>`).join('')}</div>`:'';
   const focus=A&&(A.focus||[]).length?`<div class="fchips">${A.focus.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:'';
   const maths=Object.keys(calc).length?`<details class="card"><summary style="font-weight:600">Show the maths</summary><div class="kv" style="margin-top:8px">${Object.entries(calc).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div></details>`:'';
   const empty=!Mx.length?`<div class="card empty">Insights appear after the first Garmin sync.</div>`:'';
