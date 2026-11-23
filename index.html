@@ -1100,9 +1100,9 @@ async function applySwimI1(b){
       cur.forEach((x,i)=>{const nb=sw[i];if(!nb||x.date<today||x.changedBy||['done','shifted'].includes((M0[x.id]||{}).st))return;
         const j=w.workouts.findIndex(y=>y.id===x.id);w.workouts[j]={...nb,id:x.id,date:x.date,...(x.slot?{slot:x.slot}:{}),changedBy:'swim-i1',changedAt:today};ch=true});
       if(ch)touched[ws]=w}
-    const before={};Object.keys(touched).forEach(k=>{const {_id,...b}=S.weeks[k];before[k]=b});
-    await S.db.doc('history/swim-i1').set({at:now,suggestionId:'swim-i1',before,settingsBefore:S.settings});
-    for(const [k,w] of Object.entries(touched)){const {_id,...body}=w;await S.db.doc('weeks/'+k).set(body)}
+    const ops=[];Object.entries(touched).forEach(([k,w])=>{const {_id,...body}=w;const {_id:_i,...bb}=S.weeks[k];ops.push({op:'set',path:'history/swim-i1-'+k,data:{at:now,suggestionId:'swim-i1',before:{[k]:bb}}});ops.push({op:'set',path:'weeks/'+k,data:body})});
+    m.innerHTML='<span class="small muted">Saving… keep the app open</span>';
+    await S.db.batch(ops);
     const st=JSON.parse(JSON.stringify(S.settings));const ms=st.milestones||[];
     SWIM_I1_MS.forEach(([id,by,label])=>{const i=ms.findIndex(x=>x.id===id);const v={id,by,kind:'swim',label,doneAt:null};if(i>=0)ms[i]={...ms[i],...v};else ms.push(v)});
     const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,milestones:ms,swimPlan:'i1',updatedAt:now});
@@ -1116,6 +1116,8 @@ fetch('swim-i1.json').then(r=>r.ok?r.json():null).then(j=>{if(j){S.swimI1=j;if(S
 const V6_FIX=[['Long runs','capped at 3 h and ~40 % of weekly running; fuelling practice in every long run over 85\''],['Marathon block','5 runs/week instead of 4 (bike → easy run); gentler ramp after Trakai'],['Triathlon block','a long run kept every Sunday so running fitness doesn\'t drop before Tallinn'],['Bike','20\' field test in the first tri week sets your bike zones'],['Strength','8\' lower-body + jumps added to upper-body days (running economy)'],['Base & builds','easy runs longer, long runs shorter — more even weeks'],['Race plans','splits and paces now follow your targets automatically'],['Tapers','2 weeks, volume −35–40 %, intensity kept']];
 const V6_MS=[['n9','2027-05-30','bike','Bike serviced, fitted and 3 rides done'],['n14','2027-05-28','bike','Bike 20\' field test done — bike zones set']];
 function v6Card(){
+  if(S.v6Done)return `<div class="card"><b style="color:var(--good)">✓ Season plan updated</b><div class="small muted" style="margin-top:4px">${esc(S.v6Done)}</div></div>`;
+  if(S.v6Busy)return `<div class="card"><span class="spin"></span><b>Updating your season plan…</b><div class="small muted" style="margin-top:4px">Keep the app open — about a minute.</div></div>`;
   if(!S.settings||S.settings.planVersion>=6||S.settings.planV6==='skipped'||!S.v6)return '';
   return `<div class="card sg"><div class="row between"><span class="status s-pending">Pending</span><span class="small muted">coach review</span></div>
    <h3 style="margin-top:8px;font-size:16px">Season plan review — ${V6_FIX.length} fixes</h3>
@@ -1124,22 +1126,22 @@ function v6Card(){
    <div class="row" style="margin-top:10px;gap:8px"><button class="btn p" onclick="applyV6(this)">Approve</button><button class="btn d" onclick="skipV6()">Reject</button><span id="v6Msg"></span></div></div>`;
 }
 async function applyV6(b){
-  const m=document.getElementById('v6Msg');b.disabled=true;m.innerHTML='<span class="small muted">Saving…</span>';
+  if(S.v6Busy)return;const m=document.getElementById('v6Msg');b.disabled=true;S.v6Busy=true;m.innerHTML='<span class="small muted">Saving…</span>';
   try{const now=new Date().toISOString();const touched={};let kept=0,skipped=0;
     for(const [ws,nw] of Object.entries(S.v6.weeks)){const cur=S.weeks[ws];if(!cur){touched[ws]={...nw};continue}
       const keep=cur.workouts.filter(x=>(x.changedBy&&x.changedBy!=='swim-i1')||x.date<today);kept+=keep.length;
       const gen=nw.workouts.filter(x=>x.date>=today&&!keep.some(k=>k.date===x.date&&k.sport===x.sport));
       const w={...cur,phase:nw.phase,focus:nw.focus,note:nw.note,workouts:[...keep,...gen].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0)};
       if(validateWeek(w).length){skipped++;continue}touched[ws]=w}
-    const before={};Object.keys(touched).forEach(k=>{if(S.weeks[k]){const {_id,...bb}=S.weeks[k];before[k]=bb}});
-    await S.db.doc('history/plan-v6').set({at:now,suggestionId:'plan-v6',before,settingsBefore:S.settings});
-    for(const [k,w] of Object.entries(touched)){const {_id,...body}=w;await S.db.doc('weeks/'+k).set(body)}
+    const ops=[];Object.entries(touched).forEach(([k,w])=>{const {_id,...body}=w;if(S.weeks[k]){const {_id:_i,...bb}=S.weeks[k];ops.push({op:'set',path:'history/plan-v6-'+k,data:{at:now,suggestionId:'plan-v6',before:{[k]:bb}}})}ops.push({op:'set',path:'weeks/'+k,data:body})});
+    m.innerHTML=`<span class="small muted">Saving ${Object.keys(touched).length} weeks… keep the app open (about a minute)</span>`;
+    await S.db.batch(ops);
     const st=JSON.parse(JSON.stringify(S.settings));const ms=st.milestones||[];
     V6_MS.forEach(([id,by,kind,label])=>{const i=ms.findIndex(x=>x.id===id);const v={id,by,kind,label};if(i>=0)ms[i]={...ms[i],...v};else ms.push({...v,doneAt:null})});
     if(!st.swimPlan||st.swimPlan==='i1-skipped'){SWIM_I1_MS.forEach(([id,by,label])=>{const i=ms.findIndex(x=>x.id===id);if(i>=0)ms[i]={...ms[i],by,label,kind:'swim'}})}
     const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,milestones:ms,swimPlan:'i1',planVersion:6,updatedAt:now});
-    m.innerHTML=`<span class="okmsg">Saved — ${Object.keys(touched).length} weeks updated${kept?`, ${kept} of your changes kept`:''}${skipped?`, ${skipped} weeks left as they were`:''}.</span>`;
-  }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`;b.disabled=false}
+    S.v6Busy=false;S.v6Done=`${Object.keys(touched).length} weeks updated${kept?` · ${kept} of your earlier changes kept`:''}${skipped?` · ${skipped} weeks left as they were (rule check)`:''}.`;render();
+  }catch(e){S.v6Busy=false;render();const mm=document.getElementById('v6Msg');if(mm)mm.innerHTML=`<span class="err">Not saved: ${esc(e.message||e)}</span>`}
 }
 async function skipV6(){const st=JSON.parse(JSON.stringify(S.settings));const {_id,...body}=st;await S.db.doc('settings/athlete').set({...body,planV6:'skipped'})}
 fetch('plan-v6.json').then(r=>r.ok?r.json():null).then(j=>{if(j){S.v6=j;render()}}).catch(()=>{});
@@ -1518,7 +1520,8 @@ function sheetDb(KEY){
   pull().catch(fail);
   setInterval(()=>pull().catch(()=>{}),60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull().catch(()=>{})});
-  return {doc:docRef,collection:collRef,refresh:pull};
+  const batch=async ops=>{ops.forEach(o=>{if(o.op==='set')store[o.path]=clone(o.data)});save();emit();for(let i=0;i<ops.length;i+=5)await post(ops.slice(i,i+5))};
+  return {doc:docRef,collection:collRef,refresh:pull,batch};
 }
 // ================================================================== boot
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
