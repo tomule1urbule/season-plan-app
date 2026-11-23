@@ -294,6 +294,11 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .sheet h2{font-size:23px;line-height:1.15}
 .sdot{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--c)}
 .sdot i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.msr{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0;color:var(--text)}
+.msr .mi{flex:0 0 26px;height:26px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.msr .ml{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.msr .mt{font-size:14px;line-height:1.3}
+.msstat{display:flex;gap:12px;align-items:center;border:1px solid;border-radius:14px;padding:10px 12px;margin:12px 0 6px}
+.msi{margin-top:12px}.msi span{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.msi p{margin:3px 0 0;font-size:14px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -814,13 +819,13 @@ function vSeason(){
       ${el>0?`<div class="prog"><i style="width:${el/tot*100}%"></i></div><div class="tiny muted" style="margin-top:3px">${el>=tot?'Completed':Math.round(el/tot*100)+'% through'}</div>`:''}</div></div>`}).join('');
   const races=RACE_ORDER.map(k=>raceCard(k,vd)).join('');
   const ms=(S.settings&&S.settings.milestones)||[];
-  const msH=ms.slice().sort((a,b)=>a.by<b.by?-1:1).map(x=>{const late=!x.doneAt&&x.by<today;return `<label class="ms ${x.doneAt?'done':''}"><input type="checkbox" ${x.doneAt?'checked':''} onchange="toggleMs('${esc(x.id)}',this.checked)"><span class="lb">${esc(x.label)}<span class="tiny muted"> · ${esc(x.kind)}</span></span><span class="tiny mono ${late?'st-miss':'muted'}">${x.doneAt?'✓ '+fmtD(x.doneAt):fmtD(x.by)}</span></label>`}).join('');
+  const msH=ms.slice().sort((a,b)=>a.by<b.by?-1:1).map(msRow).join('');const msDone=ms.filter(x=>x.doneAt).length;const msReady=ms.filter(x=>msState(x)==='ready').length;
   return `<div class="card"><div class="row between"><h2 style="font-size:17px">Season roadmap</h2><span class="tiny muted">hours / week</span></div>
      <div class="legend" style="margin:10px 0 4px">${SPORTS.map(s=>`<span><i style="background:${SP[s][1]}"></i>${SP[s][0]}</span>`).join('')}<span><i style="background:var(--accent)"></i>Race</span></div>
      ${roadmap()}</div>
    <div class="card"><h2 style="font-size:17px;margin-bottom:4px">Training blocks</h2>${blocks}</div>
    <h2 class="sec">Races & targets</h2>${races}
-   <div class="card"><div class="row between"><h2 style="font-size:17px">Milestones</h2><span class="small muted">${ms.filter(x=>x.doneAt).length}/${ms.length} done</span></div>${msH}</div>
+   <div class="card"><div class="row between"><h2 style="font-size:17px">Milestones</h2><span class="small muted">${msDone}/${ms.length} done</span></div><div class="bar" style="margin:8px 0 4px"><i style="width:${ms.length?msDone/ms.length*100:0}%;background:var(--accent)"></i></div>${msReady?`<div class="small" style="color:var(--accent);margin:6px 0">★ ${msReady} ready to confirm from your Garmin data</div>`:''}<div class="tiny muted" style="margin-bottom:4px">Tap one for details</div>${msH}</div>
    ${pacesCard()}
    <details class="card small muted"><summary style="font-weight:600;color:var(--text)">Plan rules</summary><br>Max 7 workouts / week · max 1 day / week with 2 workouts (AM/PM) · a brick (bike→run) counts as one · race days fixed · changes only via approved suggestions.<br><br><b style="color:var(--text)">Why weekly and not 10-day cycles?</b> With the 7-per-week cap a 10-day cycle fits fewer sessions and pushes long sessions onto weekdays. If your recovery data says you need more space between hard days, the Sunday check can propose 10-day cycles for a block.</details>`;
 }
@@ -843,6 +848,56 @@ function raceCard(k,vd){
     <div class="row" style="gap:14px;margin-top:8px"><a href="#" class="small" onclick="editTarget('${k}');return false">✎ Change target</a>${rw?`<a href="#" class="small" onclick="openWo('${rw.id}');return false">Race plan ›</a>`:''}${hist||meta.note?`<details style="display:inline"><summary>More</summary>${meta.note?`<div class="small muted" style="margin:6px 0">${esc(meta.note)}</div>`:''}${hist}</details>`:''}</div>
   </div></div></div>`;
 }
+// ================================================================== MILESTONES: info sheet, Garmin evidence, missed handling
+const MS_KIND={run:['Run','var(--run)'],swim:['Swim','var(--swim)'],bike:['Bike','var(--bike)'],strength:['Strength','var(--strength)'],brick:['Brick','var(--brick)'],race:['Race','var(--accent)'],fitness:['Fitness','var(--run)']};
+function msTime(label){const m=label.match(/(?:sub-|≤\s*)(\d{1,2}:\d{2}(?::\d{2})?)/);return m?toSec(m[1]):null}
+function msEvidence(x){
+  const acts=allActs().filter(a=>a.date<=x.by);const L=x.label;
+  if(x.kind==='race'){const k=Object.keys(RT()).find(k=>RT()[k].date===x.by);const r=k&&RT()[k];if(!r)return null;
+    const goal=msTime(L);const a=allActs().find(a=>a.date===r.date&&(a.sport==='run'||a.sport==='race'));
+    const t=r.result?toSec(r.result):a&&a.min?a.min*60:null;if(!t)return {auto:true,state:'wait',text:`Checked automatically from your Garmin race activity on ${fmtD(r.date)}.`};
+    return {auto:true,state:goal&&t<=goal||!goal?'met':'missed',text:`Race time ${hms(t)}${goal?` vs target ${hms(goal)}`:''}.`}}
+  let m=L.match(/(\d+)\s*km long run/i);
+  if(m){const km=+m[1];const best=acts.filter(a=>a.sport==='run'&&a.date>='2026-11-16').sort((a,b)=>(b.km||0)-(a.km||0))[0];
+    const ok=best&&best.km>=km*0.97&&(!/drift|decoupl/i.test(L)||best.decoupling==null||best.decoupling<5);
+    return {auto:true,state:ok?'met':'wait',text:best?`Longest run since the plan started: ${(+best.km).toFixed(1)} km${best.decoupling!=null?`, HR drift ${best.decoupling} %`:''}.`:'No long run yet.'}}
+  m=L.match(/VDOT\s*(\d+(?:\.\d)?)/);
+  if(m){const need=+m[1],now=paces().vd;return {auto:true,state:now>=need?'met':'wait',text:`Training VDOT now ${now.toFixed(1)} of ${need}. It goes up when the Sunday check confirms it from your sessions.`}}
+  return {auto:false,state:'wait',text:x.kind==='swim'?'Garmin can\'t tell if you stopped mid-length, so you confirm this one. Add a note after a swim with your longest non-stop distance.':x.kind==='strength'?'Garmin doesn\'t count push-ups or plank time reliably — tick it when you hit it.':'You confirm this one when you\'ve done it.'};
+}
+function msWhy(x){
+  const L=x.label.toLowerCase();
+  if(x.kind==='swim')return /open water|sighting/.test(L)?'The Trakai swim is 750 m in open water. Sighting and a wetsuit change everything — practise before race day.':'Each step builds towards the 750 m swim at Trakai. Distance without stopping proves the technique works.';
+  if(x.kind==='strength')return 'Upper-body strength is one of your season goals, and a strong core keeps your running form late in races.';
+  if(x.kind==='bike')return 'Sets your bike zones and builds the 20 km leg of the triathlon.';
+  if(x.kind==='brick')return 'Running off the bike feels strange the first times. Practising it removes the shock on race day.';
+  if(x.kind==='race')return 'A race result is the most honest fitness test. It resets your training paces and the next targets.';
+  if(/vdot/.test(L))return 'VDOT sets all your training paces. Reaching it on time keeps the race targets realistic.';
+  return 'Long runs with low heart-rate drift show your endurance — the limiter in Larnaka.';
+}
+function msHow(x){
+  const L=x.label.toLowerCase();
+  const wo=allWorkouts().filter(w=>w.date<=x.by&&w.date>=today&&(w.sport===x.kind||(x.kind==='fitness'&&w.sport==='run')||(x.kind==='race'&&w.sport==='race'))).slice(-1)[0];
+  const base=/css test/.test(L)?'Swim 400 m and then 200 m as fast as you can hold, with full rest in between. Note both times — the app works out your swim paces.':/ftp/.test(L)?'The planned bike test: a hard 20-minute effort after a warm-up.':x.kind==='race'?'Race day.':x.kind==='swim'?'In any swim: after the warm-up, swim front crawl as far as you can at an easy pace without stopping or standing.':x.kind==='strength'?'In a strength session: max push-ups with good form (chest to fist height), then a max plank. Note both.':/long run/.test(L)?'Your long runs build towards it — the last one before the date is the test.':/vdot/.test(L)?'Threshold sessions and races show it. The Sunday check raises VDOT when your times confirm it.':'In the planned sessions before the date.';
+  return {text:base,wo};
+}
+const MS_MISSED='Nothing breaks. After the date, the Sunday check looks at how close you got and suggests one of: a new date (if you\'re close), an easier step in between, or a change to the plan. You approve it in Review. A missed milestone is information, not failure.';
+function msState(x){if(x.doneAt)return 'done';const e=msEvidence(x);if(e&&e.state==='met')return 'ready';if(x.by<today)return e&&e.state==='missed'?'missed':'overdue';return dBetween(today,x.by)<=14?'soon':'open'}
+const MS_ST={done:['✓','var(--good)','Achieved'],ready:['★','var(--accent)','Garmin says done — confirm'],missed:['✕','var(--crit)','Missed'],overdue:['!','var(--warn)','Date passed'],soon:['●','var(--warn)','Due soon'],open:['○','var(--muted)','Upcoming']};
+function msRow(x){const s=msState(x),[ic,col,lb]=MS_ST[s];const k=MS_KIND[x.kind]||['',''];
+  return `<button class="msr" onclick="openMs('${esc(x.id)}')"><span class="mi" style="color:${col};border-color:${col}">${ic}</span><span class="ml"><span class="mt">${esc(x.label)}</span><span class="tiny"><span style="color:${k[1]}">${k[0]}</span> · <span style="color:${col}">${s==='done'?'✓ '+fmtD(x.doneAt):lb+' · '+fmtD(x.by)}</span></span></span><span class="muted">›</span></button>`}
+function openMs(id){
+  const x=((S.settings||{}).milestones||[]).find(m=>m.id===id);if(!x)return;const s=msState(x),[ic,col,lb]=MS_ST[s];const e=msEvidence(x);const h=msHow(x);const dd=dBetween(today,x.by);const k=MS_KIND[x.kind]||['',''];
+  document.getElementById('sheetIn').innerHTML=`<div class="tiny" style="color:${k[1]};font-weight:700">${k[0].toUpperCase()} MILESTONE</div><h2 style="margin-top:4px">${esc(x.label)}</h2>
+    <div class="msstat" style="border-color:${col}"><span style="color:${col};font-size:22px;font-weight:800">${ic}</span><div><b style="color:${col}">${s==='done'?'Achieved '+fmtLong(x.doneAt):lb}</b><div class="tiny muted">${s==='done'?'':dd>=0?`by ${fmtLong(x.by)} · ${dd} days left`:`was due ${fmtLong(x.by)}`}</div></div></div>
+    <div class="msi"><span>Why it matters</span><p>${esc(msWhy(x))}</p></div>
+    <div class="msi"><span>How to do it</span><p>${esc(h.text)}${h.wo?` <a href="#" onclick="openWo('${h.wo.id}');return false">${esc(h.wo.title)} · ${fmtD(h.wo.date)} ›</a>`:''}</p></div>
+    <div class="msi"><span>${e&&e.auto?'Checked from Garmin':'How it gets ticked'}</span><p>${esc(e?e.text:'')}</p></div>
+    ${s!=='done'?`<div class="msi"><span>If you don't make it</span><p>${esc(MS_MISSED)}</p></div>`:''}
+    <div class="row" style="gap:8px;margin-top:14px">${s==='done'?`<button class="btn" onclick="toggleMs('${esc(x.id)}',false);closeSheet()">Undo</button>`:`<button class="btn p" onclick="toggleMs('${esc(x.id)}',true);closeSheet()">${s==='ready'?'Confirm — achieved':'Mark achieved'}</button>`}</div>`;
+  document.getElementById('ov').classList.add('on');const sh=document.getElementById('sheet');sh.classList.add('on');sh.scrollTop=0;
+}
+
 async function toggleMs(id,on){
   if(!S.db||!S.settings)return;const ms=(S.settings.milestones||[]).map(x=>x.id===id?{...x,doneAt:on?today:null}:x);
   try{await S.db.doc('settings/athlete').update({milestones:ms})}catch(e){alert0('Could not save: '+(e.message||e.code))}
