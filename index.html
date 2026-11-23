@@ -299,6 +299,10 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .msr .ml{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.msr .mt{font-size:14px;line-height:1.3}
 .msstat{display:flex;gap:12px;align-items:center;border:1px solid;border-radius:14px;padding:10px 12px;margin:12px 0 6px}
 .msi{margin-top:12px}.msi span{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}.msi p{margin:3px 0 0;font-size:14px;line-height:1.45}
+
+.chg{grid-template-columns:24px minmax(0,1fr)!important}.chg>div{min-width:0}
+.cl{overflow-wrap:anywhere}.why1{max-width:100%}
+html,body{overflow-x:hidden}
 </style>
 </head>
 <body>
@@ -1053,7 +1057,7 @@ function chgLine(c){
     case 'replace':return `<b>${t(c.before)}</b> <span class="muted">${day(c.date)}</span> <span class="mv">${diff(c.before,c.after).join(' · ')}</span>`;
     case 'settings':{const d=describeChange(c);return `<b>${d.h}</b> <span class="mv">${d.b} → ${d.a}</span>`}
     case 'target':{const r=RT()[c.race]||{};return `<b>${esc(r.name||c.race)}</b> <span class="mv">${esc(r.goal||'—')} → ${esc(c.goal)}</span>`}
-    case 'milestone':return `<b>Milestone</b> <span class="mv">${esc((c.milestone||{}).label||'')}</span>`;
+    case 'milestone':{const m=c.milestone||{};const o=((S.settings||{}).milestones||[]).find(x=>x.id===m.id);return `<span class="muted tiny">${esc((MS_KIND[m.kind]||[m.kind||''])[0])} · by ${fmtD(m.by)}</span><div>${o&&o.label!==m.label?`<span class="muted" style="text-decoration:line-through">${esc(o.label)}</span><br>`:''}<b>${esc(m.label||'')}</b></div>`}
   }
   return '';
 }
@@ -1075,7 +1079,7 @@ function vReview(){
     return `<div class="card sg" data-sid="${esc(s._id)}"><div class="row between"><span class="status s-pending">Pending</span><span class="small muted">${esc((s.createdAt||'').slice(0,16).replace('T',' '))}</span></div>
     <h3 style="margin-top:8px;font-size:16px">${esc(s.headline||'Weekly check')}</h3>${s.source==='app'?'':`<div class="note clamp" onclick="this.classList.toggle('open')">${esc(s.summary||'')}</div>`}<div data-mw>${miniWeek(s)}</div>
     ${s.metrics?`<details style="margin-top:8px"><summary>Garmin data behind this</summary><div class="kv" style="margin-top:6px">${Object.entries(s.metrics).map(([k,v])=>`<span class="k">${esc(k)}</span><span class="mono">${esc(typeof v==='object'?JSON.stringify(v):v)}</span>`).join('')}</div></details>`:''}
-    ${(s.changes||[]).length?(s.changes||[]).map(c=>{return `<label class="chg"><input type="checkbox" data-cid="${esc(c.cid)}" ${S.sel[s._id][c.cid]?'checked':''}><div><div class="cl">${chgLine(c)}</div>${c.why?`<div class="why1" onclick="event.preventDefault();this.classList.toggle('open')">${esc(c.why)}</div>`:''}</div></label>`}).join(''):'<div class="note muted">No plan changes proposed — status report only.</div>'}
+    ${(s.changes||[]).length?(s.changes||[]).map(c=>{return `<label class="chg"><input type="checkbox" data-cid="${esc(c.cid)}" ${S.sel[s._id][c.cid]?'checked':''}><div><div class="cl">${chgLine(c)}</div>${c.why&&!(c.type==='milestone'&&/^Was:/.test(c.why))?`<div class="why1" onclick="event.preventDefault();this.classList.toggle('open')">${esc(c.why)}</div>`:''}</div></label>`}).join(''):'<div class="note muted">No plan changes proposed — status report only.</div>'}
     <textarea placeholder="Comment for the coach (optional) — read at the next Sunday check" style="margin-top:10px" data-com></textarea>
     <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">${(s.changes||[]).length?'<button class="btn p" data-act="approve">Approve selected</button><button class="btn d" data-act="reject">Reject all</button>':'<button class="btn p" data-act="ack">Got it</button>'}</div><div data-msg></div></div>`}).join('');
   const H=past.map(s=>{const cls=s.status==='approved'?'s-approved':s.status==='rejected'?'s-rejected':'s-partial';
