@@ -206,6 +206,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .seg{display:flex;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;flex-shrink:0}.seg button{border:0;background:none;color:var(--muted);font-weight:600;font-size:12.5px;padding:7px 10px;border-radius:8px}
 .seg button.on{background:var(--accent);color:#16142c}.seg button[data-v=busy].on{background:var(--crit);color:#fff}.seg button[data-v=short].on{background:var(--warn);color:#16142c}
 
+.gmb{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04)}.gmb .tiny{line-height:1.35}.gm-ok{color:var(--good)}.gm-run{color:var(--accent)}.gm-err{color:var(--crit)}.gm-chg{color:var(--warn)}
 .refc{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 2px 10px}.btn.sm{padding:7px 12px;font-size:13px}
 .bgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .bt2{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px 8px}.bt2 .bv{font-family:"Bricolage Grotesque";font-weight:800;font-size:24px;line-height:1.1}.bt2 .bv span{font-size:12px;color:var(--muted);font-weight:600;margin-left:2px}
@@ -329,7 +330,7 @@ html,body{overflow-x:hidden}
 
 <script>
 // ================================================================== constants
-const S={desc:{items:{},kinds:{}},weeks:{},suggestions:[],settings:null,actuals:{},metrics:{},notes:[],tab:'week',weekIdx:null,db:null,busy:false,sel:{},statRange:'season'};
+const S={desc:{items:{},kinds:{}},weeks:{},suggestions:[],settings:null,actuals:{},metrics:{},notes:[],garmin:{},tab:'week',weekIdx:null,db:null,busy:false,sel:{},statRange:'season'};
 const RACE_ORDER=['mazeikiai','kaunas','riga','trakai','tallinn'];
 const RACE_META={
   mazeikiai:{tag:'PB attempt',note:'First race of the season and the benchmark for the half-marathon block.'},
@@ -553,7 +554,7 @@ function woCard(x){
   const m=M[x.id]||{};const st=m.st==='done'?'<span class="tiny st-done">✓ done</span>':m.st==='shifted'?'<span class="tiny st-shift">✓ moved</span>':m.st==='missed'?'<span class="tiny st-miss">✕ missed</span>':'';
   const first=(x.steps&&x.steps.length)?x.steps.map(s=>s[1]).filter((_,i,a)=>a.length<3||i===1||a.length===1).slice(0,1)[0]:x.details;
   return `<button class="wo" style="--c:${col}" onclick="openWo('${x.id}')"><span class="ic">${ICON[x.sport]||''}</span><div>
-    <div class="h">${x.slot?`<span class="tag slot">${x.slot}</span>`:''}<span class="ttl">${esc(x.title)}</span>${x.key?'<span class="tag key">KEY</span>':''}${st}<span class="meta">${meta}</span></div>
+    <div class="h">${x.slot?`<span class="tag slot">${x.slot}</span>`:''}<span class="ttl">${esc(x.title)}</span>${x.key?'<span class="tag key">KEY</span>':''}${st}${gmBadge(x)}<span class="meta">${meta}</span></div>
     </div></button>`;
 }
 function vWeek(){
@@ -572,7 +573,55 @@ function vWeek(){
     <div class="wb"><div style="font-weight:700">${esc(w.focus)}</div>${w.note?`<div class="note">${fill(w.note)}</div>`:''}
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div></details>
   <div class="card">${days}</div>
+  ${gmWeekBar(w)}
   ${addD(w.weekStart,6)>=today?`<button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
+}
+
+// ================================================================== SEND TO GARMIN
+// The app queues workouts in garmin/<workoutId>; the "Send workouts to Garmin" task on Tomas's PC
+// builds them with the Garmin connector, schedules them on the date (watch picks them up at next sync)
+// and writes back status "sent" + Garmin ids. A changed workout shows "changed — resend".
+const GM_TASK_URL='https://claude.ai/scheduled-task/trig_01NsYCZRpdwkAqnRh7NEZ33W';
+function gmSnap(x){return {id:x.id,date:x.date,sport:x.sport,kind:x.kind||'',title:x.title||'',dur:x.dur||null,km:x.km||null,
+  steps:(x.steps||[]).map(s=>[plain(s[0]),plain(s[1])]),details:plain(x.details||'')}}
+function gmFp(x){const t=JSON.stringify(gmSnap(x));let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return (h>>>0).toString(36)}
+const gmSendable=x=>x&&x.sport!=='race'&&x.date>=today;
+function gmState(x){const g=S.garmin[x.id];if(!g)return {s:'none'};
+  if(g.status==='queued'){const mins=(Date.now()-new Date(g.requestedAt))/6e4;return mins<40?{s:'sending',g}:{s:'stuck',g}}
+  if(g.status==='error')return {s:'error',g};
+  if(g.status==='sent')return g.fp===gmFp(x)&&g.date===x.date?{s:'sent',g}:{s:'changed',g};
+  return {s:'none'}}
+function gmBadge(x){const st=gmState(x).s;return st==='sent'?'<span class="tiny gm-ok" title="On your Garmin">⌚</span>':st==='sending'?'<span class="tiny gm-run" title="Sending to Garmin">⌚…</span>':st==='changed'?'<span class="tiny gm-chg" title="Changed since sent — resend">⌚!</span>':st==='error'?'<span class="tiny gm-err" title="Garmin send failed">⌚✕</span>':''}
+function gmWoBar(x){
+  if(x.sport==='race')return '';
+  const r=gmState(x),g=r.g||{};
+  if(x.date<today)return r.s==='sent'?`<div class="gmb"><div class="tiny gm-ok">⌚ Was on your Garmin</div></div>`:'';
+  const t={none:['Not on your watch yet',''],sending:[`Sending… requested ${new Date(g.requestedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. Tap <b>Run now</b> in the task if you haven't — it appears on your watch after the next sync.`,'gm-run'],
+    stuck:['The last send didn\'t finish. Is your PC on with the Claude app open? Try again.','gm-err'],
+    error:[esc(g.error||'Sending failed.'),'gm-err'],
+    sent:[`On your Garmin calendar · sent ${g.sentAt?fmtD(g.sentAt.slice(0,10)):''}${g.note?' · '+esc(g.note):''}`,'gm-ok'],
+    changed:['Changed since you sent it — resend to update your watch','gm-chg']}[r.s];
+  const lbl=r.s==='sending'?'<span class="spin"></span>Sending':r.s==='none'?'⌚ Send to Garmin':r.s==='sent'?'Resend':'⌚ Resend';
+  return `<div class="gmb"><div class="tiny ${t[1]}">${t[0]}</div><button class="btn ${r.s==='sent'?'':'p'} sm" style="flex:none" onclick="gmSend(['${x.id}'])">${lbl}</button></div>`;
+}
+function gmWeekBar(w){
+  const ws=(w.workouts||[]).filter(gmSendable);if(!ws.length)return '';
+  const st=ws.map(x=>gmState(x).s);const todo=ws.filter((x,i)=>st[i]!=='sent'&&st[i]!=='sending');
+  const sending=st.filter(s=>s==='sending').length,sent=st.filter(s=>s==='sent').length;
+  const msg=sending?`Sending ${sending} workout${sending>1?'s':''} to Garmin…`:sent===ws.length?`All ${sent} upcoming workouts are on your Garmin`:`${sent} of ${ws.length} upcoming workouts on your Garmin`;
+  const cls=sending?'gm-run':sent===ws.length?'gm-ok':'muted';
+  return `<div class="gmb"><div class="tiny ${cls}">⌚ ${msg}</div>${todo.length?`<button class="btn p sm" style="flex:none" onclick="gmSend(${esc(JSON.stringify(todo.map(x=>x.id)))})">Send ${todo.length===ws.length?'week':todo.length+' more'}</button>`:''}</div>`;
+}
+async function gmSend(ids){
+  const xs=ids.map(findWo).filter(gmSendable);if(!xs.length)return;
+  if(!/^https:/.test(GM_TASK_URL)){alert0('The Garmin send task isn\'t set up yet.');return}
+  window.open(GM_TASK_URL,'_blank');   // open first: browsers block pop-ups after an await
+  const now=new Date().toISOString();
+  const ops=xs.map(x=>{const old=S.garmin[x.id]||{};const prev=old.garminWorkoutId?{garminWorkoutId:old.garminWorkoutId,garminWorkoutId2:old.garminWorkoutId2||null,scheduledId:old.scheduledId||null,date:old.date}:(old.prev||null);
+    const d={workoutId:x.id,date:x.date,status:'queued',requestedAt:now,fp:gmFp(x),snapshot:gmSnap(x)};if(prev)d.prev=prev;
+    S.garmin[x.id]=d;return {op:'set',path:'garmin/'+x.id,data:d}});
+  render();if(document.getElementById('sheet').classList.contains('on')&&ids.length===1)openWo(ids[0]);
+  try{await S.db.batch(ops)}catch(e){alert0('Could not queue for Garmin: '+(e.message||e.code||e))}
 }
 // ================================================================== REPLAN: rearrange a week around busy days
 const HARDK=new Set(['intervals','intervals-10k','threshold','cruise','hills','fartlek','hmp','mp','long','css','brick','bike-intervals','speed','swim-test']);
@@ -768,6 +817,7 @@ function openWo(id){
    ${a?`<div class="donebox"><b style="color:var(--good)">✓</b><div>${m.st==='shifted'?'Done on '+fmtD(a.date):'Done'} · ${[a.km?(+a.km).toFixed(2)+' km':'',a.min?Math.round(a.min)+"'":'',a.pace?esc(a.pace):'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · ')}</div></div>`:m.st==='missed'?'<div class="donebox" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)"><b style="color:var(--crit)">✕</b><div>Not found in Garmin for this day</div></div>':''}
    ${sv.html}
    <div class="tiny muted" style="text-align:center;margin-top:8px">Tap a step for details</div>
+   ${gmWoBar(x)}
    ${acc('Why this session',whyB)}
    ${acc('How it should feel',feelB)}
    ${acc('Your paces',paceB)}
@@ -1544,6 +1594,7 @@ render();
   coll('actuals',a=>{S.actuals={};a.forEach(x=>S.actuals[x.weekStart||x._id]=x)});
   coll('metrics',a=>{S.metrics={};a.forEach(x=>S.metrics[x.weekStart||x._id]=x)});
   coll('notes',a=>S.notes=a);
+  coll('garmin',a=>{S.garmin={};a.forEach(g=>S.garmin[g.workoutId||g._id]=g)});
   db.doc('meta/refresh').onSnapshot(d=>{S.refresh=d.exists?d.data():null;if(S.tab==='garmin')render()},()=>{});
   db.doc('settings/athlete').onSnapshot(d=>{S.settings=d.exists?d.data():null;render()},err);
 })();
