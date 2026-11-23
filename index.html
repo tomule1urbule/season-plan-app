@@ -581,7 +581,7 @@ function vWeek(){
 // The app queues workouts in garmin/<workoutId>; the "Send workouts to Garmin" task on Tomas's PC
 // builds them with the Garmin connector, schedules them on the date (watch picks them up at next sync)
 // and writes back status "sent" + Garmin ids. A changed workout shows "changed — resend".
-const GM_TASK_URL='https://claude.ai/scheduled-task/trig_01NsYCZRpdwkAqnRh7NEZ33W';
+const GM_TASK_URL='https://claude.ai/scheduled-task/trig_01KZfwp49WZZn5fdApAdeS2n';
 function gmSnap(x){return {id:x.id,date:x.date,sport:x.sport,kind:x.kind||'',title:x.title||'',dur:x.dur||null,km:x.km||null,
   steps:(x.steps||[]).map(s=>[plain(s[0]),plain(s[1])]),details:plain(x.details||'')}}
 function gmFp(x){const t=JSON.stringify(gmSnap(x));let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return (h>>>0).toString(36)}
