@@ -305,6 +305,20 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 .cl{overflow-wrap:anywhere}.why1{max-width:100%}
 html,body{overflow-x:hidden}
 .phl{display:grid;gap:6px;margin-top:10px}.phl div{display:grid;grid-template-columns:76px 1fr;gap:8px;font-size:13.5px}.phl b{color:var(--swim)}.phl span{color:var(--sub)}
+.mvbox{margin:14px 0 4px;padding:12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04)}
+.mvdays{display:grid;grid-template-columns:repeat(auto-fit,minmax(40px,1fr));gap:6px;margin-top:10px}
+.mvd{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:6px 2px 8px;color:var(--text);display:flex;flex-direction:column;align-items:center;gap:1px}
+.mvd .w{font-size:11px;color:var(--muted)}.mvd .n{font-weight:700;font-size:15px}
+.mvd .sc{margin-top:3px;min-width:24px;padding:1px 5px;border-radius:999px;font-size:12px;font-weight:800;color:#16142c;background:var(--line)}
+.mvd.cur{opacity:.55}.mvd.cur .sc{color:var(--muted);background:none;font-weight:600}.mvd.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.mvopt{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.mvopt button{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12.5px;color:var(--sub)}.mvopt button.on{border-color:var(--accent);color:var(--text)}
+.mvr{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border-left:4px solid var(--vc)}
+.mvs{display:flex;align-items:baseline;gap:2px;color:var(--vc)}.mvs b{font-family:'Bricolage Grotesque';font-size:30px;font-weight:800;line-height:1}.mvs span{font-size:12px;color:var(--muted)}
+.mvv{font-weight:700;color:var(--vc)}
+.mvn{list-style:none;margin:10px 0 0;padding:0}.mvn li{display:flex;gap:8px;font-size:13px;line-height:1.4;padding:5px 0;border-top:1px solid var(--grid)}
+.mvn li i{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:800;color:#16142c;margin-top:1px}
+.mvn .good i{background:var(--good)}.mvn .warn i{background:var(--warn)}.mvn .bad i{background:var(--crit);color:#fff}.mvn .info i{background:var(--line);color:var(--sub)}
+.mvdone{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 10px;padding:10px 12px;border-radius:12px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);font-size:13px}
 </style>
 </head>
 <body>
@@ -574,7 +588,7 @@ function vWeek(){
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div></details>
   <div class="card">${days}</div>
   ${gmWeekBar(w)}
-  ${addD(w.weekStart,6)>=today?`<button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
+  ${addD(w.weekStart,6)>=today?`<div class="tiny muted" style="text-align:center;margin:12px 8px 0">Want to swap days yourself? Open any upcoming workout → <b>↔ Move</b> to see each day rated 0–10.</div><button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
 }
 
 // ================================================================== SEND TO GARMIN
@@ -711,6 +725,107 @@ async function rpGo(){
   }catch(e){m.innerHTML=`<span class="err">${esc(e.message||e)}</span>`}
 }
 
+// ================================================================== MOVE: manual rearrange, rated 0–10 before you confirm
+// Rating = 10 − cost of NEW problems the move creates + half the value of problems it fixes.
+// Rule breaks (max 7 sessions, max 1 double day, 3+ on a day, race day) → "Not allowed".
+const RUNISH=x=>x.sport==='run'||x.sport==='brick'||(x.sport==='race'&&x.km);
+const nmW=x=>(x&&x.title||'').split(/ — | \+ | \(/)[0];
+const dayN=d=>DOW[(parse(d).getDay()+6)%7];
+function canMove(x){if(!x||x.sport==='race'||x.date<today)return false;return !['done','shifted'].includes((matchAll()[x.id]||{}).st)}
+function mvCtx(x){const ws=mondayOf(x.date);const w=S.weeks[ws];const D=[...Array(7)].map((_,i)=>addD(ws,i));const pre=addD(ws,-1),post=addD(ws,7);
+  return {w,ws,D,out:allWorkouts().filter(y=>y.date===pre||y.date===post)}}
+const mvArr=(ctx,ch)=>ctx.w.workouts.map(y=>ch[y.id]?{...y,date:ch[y.id]}:y);
+function mvIssues(ctx,list){
+  const T=[addD(ctx.ws,-1),...ctx.D,addD(ctx.ws,7)];const all=list.concat(ctx.out);const by=d=>all.filter(y=>y.date===d);
+  const race=y=>y.sport==='race';const hard=y=>!race(y)&&isHardW(y)&&!['swim','strength'].includes(y.sport);
+  const it=[];const add=(k,pen,s)=>it.push({k,pen,s});const inW=i=>i>0&&i<8;
+  for(let i=0;i<T.length;i++){const d=T[i],a=by(d),h=a.filter(hard),dn=dayN(d);
+    if(inW(i)){
+      if(h.length>=2)add('hh'+d,4,`Two hard sessions on ${dn} (${h.map(nmW).join(' + ')}) — one of them won't get your best effort.`);
+      if(a.filter(y=>RUNISH(y)&&!race(y)).length>=2)add('rr'+d,2.5,`Two runs on ${dn} — better on separate days.`);
+      if(a.length>=2){const big=a.filter(y=>(y.dur||0)>=60).length>=2;add('dbl'+d,big?2:1,`Double day on ${dn}: ${a.map(nmW).join(' + ')}${big?' — two long sessions, a big day':''}.`)}
+      if(h.length&&a.some(y=>y.sport==='strength'))add('sh'+d,.3,`${nmW(h[0])} and strength both on ${dn} — do the ${h[0].sport==='bike'?'ride':'run'} first, strength after.`);
+      const lg=a.find(y=>y.kind==='long');if(lg&&(parse(d).getDay()+6)%7<5)add('wl'+d,.8,`Long run on a weekday (${lg.dur||'?'} min) — fine if ${dn} gives you the time.`);
+    }
+    if(i<T.length-1&&(inW(i)||inW(i+1))){const n=by(T[i+1]),hn=n.filter(hard),nd=dayN(T[i+1]);
+      if(h.length&&hn.length){const L=[...h,...hn].some(y=>y.kind==='long');add('b2b'+d,4,`Hard days back-to-back: ${nmW(h[0])} (${dn}) → ${nmW(hn[0])} (${nd}). ${L?'The long run would go in on tired legs.':'Quality sessions need ~48 h between them to pay off.'}`)}
+      if(h.length&&n.some(race))add('pre'+d,5,`${nmW(h[0])} the day before the race — you'd start tired.`);
+      if(a.some(race)&&hn.length)add('post'+d,3,`${nmW(hn[0])} the day after the race — legs need easy days first.`);
+      if(a.some(y=>y.sport==='strength')&&hn.length)add('sb'+d,1,`Strength on ${dn} the day before ${nmW(hn[0])} — the leg work can leave you heavy. Strength after a hard day, or 48 h before, works better.`);
+      if(a.some(y=>y.sport==='swim')&&n.some(y=>y.sport==='swim'))add('ss'+d,.5,`Swims on back-to-back days (${dn}–${nd}) — spread out, technique sticks better.`);
+      if(i<T.length-2&&a.some(RUNISH)&&n.some(RUNISH)&&by(T[i+2]).some(RUNISH))add('r3'+d,1,`Runs 3 days in a row (${dn}–${dayN(T[i+2])}) — more impact without a break.`);
+    }
+  }
+  if(!ctx.D.some(d=>!list.some(y=>y.date===d)))add('norest',1.5,'No full rest day left this week.');
+  return {it,errs:validateWeek({weekStart:ctx.ws,workouts:list})};
+}
+function rateMove(x,d,swapId){
+  const ctx=mvCtx(x);const ch={[x.id]:d};if(swapId)ch[swapId]=x.date;
+  if(ctx.w.workouts.some(y=>y.date===d&&y.sport==='race'))return {score:0,broken:true,notes:[{t:'bad',s:'Race day — the race stays on its own.'}]};
+  const old=mvIssues(ctx,ctx.w.workouts),nw=mvIssues(ctx,mvArr(ctx,ch));
+  if(nw.errs.length)return {score:0,broken:true,notes:nw.errs.map(e=>({t:'bad',s:'Breaks your rule: '+e+'.'}))};
+  const ok=new Set(old.it.map(i=>i.k)),nk=new Set(nw.it.map(i=>i.k));
+  const added=nw.it.filter(i=>!ok.has(i.k)),fixed=old.it.filter(i=>!nk.has(i.k));
+  const raw=10-added.reduce((s,i)=>s+i.pen,0)+.5*fixed.reduce((s,i)=>s+i.pen,0);
+  const notes=[...added.sort((a,b)=>b.pen-a.pen).map(i=>({t:i.pen>=3?'bad':i.pen>=.8?'warn':'info',s:i.s})),...fixed.map(i=>({t:'good',s:'Fixes: '+i.s}))];
+  if(!added.some(i=>i.pen>=.8))notes.push({t:'good',s:isHardW(x)?'Hard sessions stay spaced out and your weekly rules hold.':'No new conflicts — easy sessions are the most flexible to move.'});
+  const g=gmState(x).s;if(g==='sent'||g==='changed')notes.push({t:'info',s:'Already on your watch — tap Resend after moving so Garmin shows the new day.'});
+  return {score:Math.max(0,Math.min(10,Math.round(raw))),broken:false,notes};
+}
+function mvVerdict(r){if(r.broken)return {l:'Not allowed',c:'var(--crit)'};const s=r.score;
+  return s>=9?{l:'Great choice',c:'var(--good)'}:s>=7?{l:'Fine',c:'var(--good)'}:s>=5?{l:'OK with care',c:'var(--warn)'}:s>=3?{l:'Risky',c:'#ef7d3c'}:{l:'Not recommended',c:'var(--crit)'}}
+function mvOptions(x,d){
+  const ctx=mvCtx(x);const there=ctx.w.workouts.filter(y=>y.date===d&&y.id!==x.id);
+  const o=[{mode:'move',r:rateMove(x,d)}];there.filter(canMove).forEach(y=>o.push({mode:'swap',y,r:rateMove(x,d,y.id)}));
+  return o.sort((a,b)=>(a.r.broken-b.r.broken)||(b.r.score-a.r.score)||(a.mode==='move'?-1:1));
+}
+function mvBox(x){
+  if(!canMove(x)||!mvCtx(x).w)return '';const days=mvCtx(x).D.filter(d=>d>=today);if(days.length<2)return '';
+  const b=days.map(d=>{if(d===x.date)return `<button class="mvd cur" disabled><div class="w">${dayN(d)}</div><div class="n">${parse(d).getDate()}</div><span class="sc">now</span></button>`;
+    const r=mvOptions(x,d)[0].r,v=mvVerdict(r);
+    return `<button class="mvd" data-d="${d}" onclick="mvPick('${x.id}','${d}',0)"><div class="w">${dayN(d)}</div><div class="n">${parse(d).getDate()}</div><span class="sc" style="background:${v.c}">${r.broken?'✕':r.score}</span></button>`}).join('');
+  return `<div class="mvbox" id="mvBox"><b>↔ Move to another day</b><div class="tiny muted" style="margin-top:3px">Each day is rated 0–10: hard-day spacing, races, recovery, rest days and your rules (max 7 sessions, 1 double day). Tap a day for the coach's comments.</div><div class="mvdays">${b}</div><div id="mvOut"></div></div>`;
+}
+function mvPick(id,d,k){
+  const x=findWo(id);if(!x)return;const opts=mvOptions(x,d);const o=opts[k]||opts[0];const v=mvVerdict(o.r);
+  document.querySelectorAll('.mvd').forEach(b=>b.classList.toggle('on',b.dataset.d===d));
+  const ic={good:'✓',warn:'!',bad:'✕',info:'i'};
+  const tabs=opts.length>1?`<div class="mvopt">${opts.map((p,i)=>`<button class="${p===o?'on':''}" onclick="mvPick('${id}','${d}',${i})">${p.mode==='swap'?`Swap with ${esc(nmW(p.y))}`:`Add to ${dayN(d)}`} <b style="color:${mvVerdict(p.r).c}">${p.r.broken?'✕':p.r.score}</b></button>`).join('')}</div>`:'';
+  const what=o.mode==='swap'?`${esc(nmW(x))} → ${dayN(d)}, ${esc(nmW(o.y))} → ${dayN(x.date)}`:`${esc(nmW(x))} → ${dayN(d)} ${fmtD(d)}`;
+  document.getElementById('mvOut').innerHTML=`${tabs}<div class="mvr" style="--vc:${v.c}"><div class="mvs"><b>${o.r.broken?'✕':o.r.score}</b><span>/10</span></div><div><div class="mvv">${v.l}</div><div class="tiny muted">${what}</div></div></div>
+    <ul class="mvn">${o.r.notes.map(n=>`<li class="${n.t}"><i>${ic[n.t]}</i><span>${esc(n.s)}</span></li>`).join('')}</ul>
+    ${o.r.broken?'':`<button class="btn ${o.r.score<5?'d':'p'}" style="width:100%;margin-top:10px" onclick="mvApply('${id}','${d}',${opts.indexOf(o)},this)">${o.r.score<5?`Move anyway (${o.r.score}/10)`:o.mode==='swap'?'Swap days':`Move to ${dayN(d)}`}</button>`}<div id="mvMsg"></div>`;
+}
+async function mvApply(id,d,k,btn){
+  if(S.busy)return;const x=findWo(id);if(!x)return;const o=mvOptions(x,d)[k];if(!o||o.r.broken)return;
+  const m=document.getElementById('mvMsg');btn.disabled=true;S.busy=true;
+  try{
+    const ws=mondayOf(x.date);const src=S.weeks[ws];if(!src)throw new Error('Plan week not found.');
+    const {_id,...before}=JSON.parse(JSON.stringify(src));const w=JSON.parse(JSON.stringify(before));const now=new Date().toISOString();
+    const ch={[x.id]:d};if(o.mode==='swap')ch[o.y.id]=x.date;
+    w.workouts.forEach(y=>{if(ch[y.id]){y.date=ch[y.id];y.movedAt=today}});
+    const errs=validateWeek(w);if(errs.length)throw new Error('Not moved — '+errs.join('; '));
+    const by={};w.workouts.forEach(y=>{delete y.slot;(by[y.date]=by[y.date]||[]).push(y)});Object.values(by).forEach(a=>{if(a.length===2){a[0].slot='AM';a[1].slot='PM'}});
+    w.workouts.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+    const sid=today+'-move-'+Math.random().toString(36).slice(2,6);const v=mvVerdict(o.r);
+    const changes=[{cid:'c1',type:'move',date:x.date,newDate:d,workoutId:x.id,before:x,why:`Moved by Tomas · rated ${o.r.score}/10 (${v.l})`}];
+    if(o.mode==='swap')changes.push({cid:'c2',type:'move',date:o.y.date,newDate:x.date,workoutId:o.y.id,before:o.y,why:'Swapped'});
+    const sug={createdAt:now,forWeek:ws,status:'approved',source:'manual',rating:o.r.score,
+      headline:`You moved ${nmW(x)} ${dayN(x.date)} → ${dayN(d)}${o.mode==='swap'?` (swapped with ${nmW(o.y)})`:''} · rated ${o.r.score}/10`,
+      summary:o.r.notes.map(n=>n.s).join(' '),changes,decision:{at:now,accepted:changes.map(c=>c.cid),rejected:[],comment:'Moved by Tomas in the app'}};
+    await S.db.batch([{op:'set',path:'history/'+sid,data:{at:now,suggestionId:sid,before:{[ws]:before}}},{op:'set',path:'weeks/'+ws,data:w},{op:'set',path:'suggestions/'+sid,data:sug}]);
+    S.lastMove={sid,ws,before,sug,id};
+    openWo(id);
+    document.getElementById('sheetIn').insertAdjacentHTML('afterbegin',`<div class="mvdone" id="mvDone"><span>✓ Moved to ${dayN(d)} ${fmtD(d)} · ${o.r.score}/10${gmState(findWo(id)||x).s==='changed'?' · resend to Garmin below':''}</span><button class="btn sm" onclick="mvUndo(this)">Undo</button></div>`);
+  }catch(e){m.innerHTML=`<div class="err">${esc(e.message||e.code||e)}</div>`;btn.disabled=false}finally{S.busy=false}
+}
+async function mvUndo(btn){
+  const L=S.lastMove;if(!L||S.busy)return;btn.disabled=true;S.busy=true;
+  try{await S.db.batch([{op:'set',path:'weeks/'+L.ws,data:L.before},{op:'set',path:'suggestions/'+L.sid,data:{...L.sug,status:'reverted',revertedAt:new Date().toISOString()}}]);
+    S.lastMove=null;openWo(L.id);document.getElementById('sheetIn').insertAdjacentHTML('afterbegin','<div class="mvdone"><span>↩ Move undone — back to the original day.</span></div>')}
+  catch(e){btn.disabled=false;btn.textContent='Undo failed — retry'}finally{S.busy=false}
+}
+
 // ================================================================== STEP VISUALS
 const INTC=['#7b86b8','#3fb8a8','#e8b73f','#ef7d3c','#e5508f'];
 const INTN=['Easy','Steady','Moderate','Hard','Very hard'];
@@ -818,6 +933,7 @@ function openWo(id){
    ${sv.html}
    <div class="tiny muted" style="text-align:center;margin-top:8px">Tap a step for details</div>
    ${gmWoBar(x)}
+   ${mvBox(x)}
    ${acc('Why this session',whyB)}
    ${acc('How it should feel',feelB)}
    ${acc('Your paces',paceB)}
