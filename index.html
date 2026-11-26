@@ -357,10 +357,10 @@ const SP={swim:['Swim','var(--swim)'],run:['Run','var(--run)'],bike:['Bike','var
 const BLOCKS=[
   {name:'Recovery',from:'2026-11-16',to:'2026-11-29',col:'#5b6372',why:'Heal from Larnaka. Strength-only first week, then easy running and a CSS swim test.',targets:['Pain-free easy running','CSS swim test']},
   {name:'Base',from:'2026-11-30',to:'2027-01-03',col:'#2f8f5f',why:'Aerobic engine, upper-body strength season (2×/week), swim technique.',targets:['1500 m swim non-stop','Long run 16 km easy','Push-up baseline']},
-  {name:'10K block',from:'2027-01-04',to:'2027-02-16',col:'#d95926',why:'VO₂max + threshold for a Mažeikiai PB.',targets:['VDOT 44.5','Mažeikiai sub-45:00','CSS 1:45/100 m']},
-  {name:'Half block',from:'2027-02-17',to:'2027-05-16',col:'#c98500',why:'Threshold & HM-pace volume. Kaunas = rehearsal, Riga = A race.',targets:['Kaunas ≈1:40 controlled','Riga sub-1:35','Long run 22 km']},
+  {name:'10K block',from:'2027-01-04',to:'2027-02-16',col:'#d95926',why:'VO₂max + threshold for a Mažeikiai PB.',targets:['VDOT 44.5','@mazeikiai','CSS 1:45/100 m']},
+  {name:'Half block',from:'2027-02-17',to:'2027-05-16',col:'#c98500',why:'Threshold & HM-pace volume. Kaunas = rehearsal, Riga = A race.',targets:['@kaunas','@riga','Long run 22 km']},
   {name:'Tri block',from:'2027-05-17',to:'2027-06-27',col:'#3987e5',why:'Bike training, bricks and open-water swimming for the Trakai debut.',targets:['1000 m open water','Bricks without leg panic','Finish Trakai']},
-  {name:'Marathon block',from:'2027-06-28',to:'2027-09-12',col:'#d55181',why:'MP volume and long runs to 32 km for Tallinn.',targets:['32 km long run','Tallinn sub-3:38']},
+  {name:'Marathon block',from:'2027-06-28',to:'2027-09-12',col:'#d55181',why:'MP volume and long runs to 32 km for Tallinn.',targets:['32 km long run','@tallinn']},
 ];
 // coaching library by workout kind (used for the detail sheet)
 const KIND={
@@ -481,6 +481,7 @@ function render(){
   if(!weekList().length&&S.tab!=='garmin'){v.innerHTML='<div class="card empty">No plan data yet.</div>';return}
   v.innerHTML=({week:vWeek,season:vSeason,stats:vStats,review:vReview,garmin:vGarmin})[S.tab]();
   if(S.tab==='review')bindReview();
+  clearTimeout(window.__gmT);window.__gmT=setTimeout(()=>gmAuto().catch(()=>{}),2500);
   if(S.tab==='season'){const sc=document.getElementById('roadScroll');if(sc){const x=+sc.dataset.cur||0;sc.scrollLeft=Math.max(0,x-sc.clientWidth/2)}}
 }
 function go(t){S.tab=t;try{history.replaceState(null,'','#'+t)}catch(e){try{location.hash=t}catch(_){}}render();window.scrollTo(0,0)}
@@ -588,7 +589,7 @@ function vWeek(){
     <div class="totals"><div class="tot"><div class="v">${w.workouts.length}</div><div class="l">workouts</div></div><div class="tot"><div class="v">~${Math.round(run)}</div><div class="l">run km${a&&a.summary?` · did ${Math.round(a.summary.runKm||0)}`:''}</div></div><div class="tot"><div class="v">${hrs.toFixed(1)}</div><div class="l">hours${a&&a.summary?` · did ${(+a.summary.hours||0).toFixed(1)}`:''}</div></div><div class="tot"><div class="v">${sw}</div><div class="l">swims</div></div></div></div></details>
   <div class="card">${days}</div>
   ${gmWeekBar(w)}
-  ${addD(w.weekStart,6)>=today?`<div class="tiny muted" style="text-align:center;margin:12px 8px 0">Want to swap days yourself? Open any upcoming workout → <b>↔ Move</b> to see each day rated 0–10.</div><button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
+  ${addD(w.weekStart,6)>=today?`<div class="tiny muted" style="text-align:center;margin:12px 8px 0">Want to swap days yourself? Open any upcoming workout → <b>↔ Move</b> to see each day rated 0–10. Changes go to your watch automatically.</div><button class="lnk" onclick="openReplan()">Schedule changed? Rearrange this week</button>`:''}`;
 }
 
 // ================================================================== SEND TO GARMIN
@@ -596,46 +597,72 @@ function vWeek(){
 // builds them with the Garmin connector, schedules them on the date (watch picks them up at next sync)
 // and writes back status "sent" + Garmin ids. A changed workout shows "changed — resend".
 const GM_TASK_URL='https://claude.ai/scheduled-task/trig_01KZfwp49WZZn5fdApAdeS2n';
+// Auto-send: the app queues the next GM_AUTO_DAYS of workouts by itself (new, changed, moved) and asks Garmin to
+// remove workouts that were dropped from the plan. The PC task runs on its own at these Vilnius times.
+const GM_SLOTS=[[5,53],[13,53],[20,53]],GM_AUTO_DAYS=7;
+function gmNextSlot(from){const f=new Date(from);for(let k=0;k<3;k++)for(const [h,m] of GM_SLOTS){const d=new Date(f);d.setDate(d.getDate()+k);d.setHours(h,m,0,0);if(d>f)return d}return f}
+const hhmm=d=>d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 function gmSnap(x){return {id:x.id,date:x.date,sport:x.sport,kind:x.kind||'',title:x.title||'',dur:x.dur||null,km:x.km||null,
   steps:(x.steps||[]).map(s=>[plain(s[0]),plain(s[1])]),details:plain(x.details||'')}}
 function gmFp(x){const t=JSON.stringify(gmSnap(x));let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return (h>>>0).toString(36)}
 const gmSendable=x=>x&&x.sport!=='race'&&x.date>=today;
 function gmState(x){const g=S.garmin[x.id];if(!g)return {s:'none'};
-  if(g.status==='queued'){const mins=(Date.now()-new Date(g.requestedAt))/6e4;return mins<40?{s:'sending',g}:{s:'stuck',g}}
+  if(g.status==='queued'){const due=gmNextSlot(g.requestedAt);return Date.now()<due.getTime()+45*6e4?{s:'sending',g,due}:{s:'stuck',g}}
   if(g.status==='error')return {s:'error',g};
   if(g.status==='sent')return g.fp===gmFp(x)&&g.date===x.date?{s:'sent',g}:{s:'changed',g};
   return {s:'none'}}
-function gmBadge(x){const st=gmState(x).s;return st==='sent'?'<span class="tiny gm-ok" title="On your Garmin">⌚</span>':st==='sending'?'<span class="tiny gm-run" title="Sending to Garmin">⌚…</span>':st==='changed'?'<span class="tiny gm-chg" title="Changed since sent — resend">⌚!</span>':st==='error'?'<span class="tiny gm-err" title="Garmin send failed">⌚✕</span>':''}
+function gmBadge(x){const st=gmState(x).s;return st==='sent'?'<span class="tiny gm-ok" title="On your Garmin">⌚</span>':st==='sending'?'<span class="tiny gm-run" title="Queued for Garmin">⌚…</span>':st==='changed'?'<span class="tiny gm-chg" title="Changed — will be resent">⌚!</span>':st==='error'||st==='stuck'?'<span class="tiny gm-err" title="Garmin send failed">⌚✕</span>':''}
 function gmWoBar(x){
   if(x.sport==='race')return '';
   const r=gmState(x),g=r.g||{};
   if(x.date<today)return r.s==='sent'?`<div class="gmb"><div class="tiny gm-ok">⌚ Was on your Garmin</div></div>`:'';
-  const t={none:['Not on your watch yet',''],sending:[`Sending… requested ${new Date(g.requestedAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}. Tap <b>Run now</b> in the task if you haven't — it appears on your watch after the next sync.`,'gm-run'],
-    stuck:['The last send didn\'t finish. Is your PC on with the Claude app open? Try again.','gm-err'],
+  const auto=x.date<=addD(today,GM_AUTO_DAYS),nxt=hhmm(gmNextSlot(new Date()));
+  const t={none:[auto?`Goes to your watch automatically at ${nxt}`:`Sent automatically ${GM_AUTO_DAYS} days ahead`,''],
+    sending:[`Queued · goes to your watch at ${r.due?hhmm(r.due):nxt} (PC on, Claude app open). Need it sooner? Tap <b>Send now</b>, then <b>Run now</b>.`,'gm-run'],
+    stuck:['The auto-send didn\'t pick this up. Is your PC on with the Claude app open? Tap Send now to retry.','gm-err'],
     error:[esc(g.error||'Sending failed.'),'gm-err'],
     sent:[`On your Garmin calendar · sent ${g.sentAt?fmtD(g.sentAt.slice(0,10)):''}${g.note?' · '+esc(g.note):''}`,'gm-ok'],
-    changed:['Changed since you sent it — resend to update your watch','gm-chg']}[r.s];
-  const lbl=r.s==='sending'?'<span class="spin"></span>Sending':r.s==='none'?'⌚ Send to Garmin':r.s==='sent'?'Resend':'⌚ Resend';
+    changed:[`Changed since it was sent — the new version goes to your watch at ${nxt}`,'gm-chg']}[r.s];
+  const lbl=r.s==='sent'?'Resend':'⌚ Send now';
   return `<div class="gmb"><div class="tiny ${t[1]}">${t[0]}</div><button class="btn ${r.s==='sent'?'':'p'} sm" style="flex:none" onclick="gmSend(['${x.id}'])">${lbl}</button></div>`;
 }
 function gmWeekBar(w){
   const ws=(w.workouts||[]).filter(gmSendable);if(!ws.length)return '';
-  const st=ws.map(x=>gmState(x).s);const todo=ws.filter((x,i)=>st[i]!=='sent'&&st[i]!=='sending');
-  const sending=st.filter(s=>s==='sending').length,sent=st.filter(s=>s==='sent').length;
-  const msg=sending?`Sending ${sending} workout${sending>1?'s':''} to Garmin…`:sent===ws.length?`All ${sent} upcoming workouts are on your Garmin`:`${sent} of ${ws.length} upcoming workouts on your Garmin`;
-  const cls=sending?'gm-run':sent===ws.length?'gm-ok':'muted';
-  return `<div class="gmb"><div class="tiny ${cls}">⌚ ${msg}</div>${todo.length?`<button class="btn p sm" style="flex:none" onclick="gmSend(${esc(JSON.stringify(todo.map(x=>x.id)))})">Send ${todo.length===ws.length?'week':todo.length+' more'}</button>`:''}</div>`;
+  const st=ws.map(x=>gmState(x).s);const todo=ws.filter((x,i)=>st[i]!=='sent');
+  const q=st.filter(s=>s==='sending').length,sent=st.filter(s=>s==='sent').length,bad=st.filter(s=>s==='error'||s==='stuck').length;
+  const nxt=hhmm(gmNextSlot(new Date()));
+  const msg=sent===ws.length?`All ${sent} upcoming workouts are on your Garmin`:q?`${sent} of ${ws.length} on your Garmin · ${q} queued for the auto-send at ${nxt}`:`${sent} of ${ws.length} upcoming workouts on your Garmin${bad?` · ${bad} failed`:''} · auto-send ${nxt}`;
+  const cls=bad?'gm-err':q?'gm-run':sent===ws.length?'gm-ok':'muted';
+  return `<div class="gmb"><div class="tiny ${cls}">⌚ ${msg}</div>${todo.length?`<button class="btn p sm" style="flex:none" onclick="gmSend(${esc(JSON.stringify(todo.map(x=>x.id)))})">Send now</button>`:''}</div>`;
 }
+function gmOps(xs){const now=new Date().toISOString();
+  return xs.map(x=>{const old=S.garmin[x.id]||{};const prev=old.garminWorkoutId?{garminWorkoutId:old.garminWorkoutId,garminWorkoutId2:old.garminWorkoutId2||null,scheduledId:old.scheduledId||null,date:old.date}:(old.prev||null);
+    const d={workoutId:x.id,date:x.date,status:'queued',requestedAt:now,fp:gmFp(x),snapshot:gmSnap(x)};if(prev)d.prev=prev;
+    S.garmin[x.id]=d;return {op:'set',path:'garmin/'+x.id,data:d}})}
+// "Send now": queue + open the task so it runs straight away (otherwise the next auto-send picks it up)
 async function gmSend(ids){
   const xs=ids.map(findWo).filter(gmSendable);if(!xs.length)return;
-  if(!/^https:/.test(GM_TASK_URL)){alert0('The Garmin send task isn\'t set up yet.');return}
   window.open(GM_TASK_URL,'_blank');   // open first: browsers block pop-ups after an await
-  const now=new Date().toISOString();
-  const ops=xs.map(x=>{const old=S.garmin[x.id]||{};const prev=old.garminWorkoutId?{garminWorkoutId:old.garminWorkoutId,garminWorkoutId2:old.garminWorkoutId2||null,scheduledId:old.scheduledId||null,date:old.date}:(old.prev||null);
-    const d={workoutId:x.id,date:x.date,status:'queued',requestedAt:now,fp:gmFp(x),snapshot:gmSnap(x)};if(prev)d.prev=prev;
-    S.garmin[x.id]=d;return {op:'set',path:'garmin/'+x.id,data:d}});
+  const ops=gmOps(xs.filter(x=>gmState(x).s!=='sending'));
   render();if(document.getElementById('sheet').classList.contains('on')&&ids.length===1)openWo(ids[0]);
-  try{await S.db.batch(ops)}catch(e){alert0('Could not queue for Garmin: '+(e.message||e.code||e))}
+  if(ops.length)try{await S.db.batch(ops)}catch(e){alert0('Could not queue for Garmin: '+(e.message||e.code||e))}
+}
+// Automatic: keep the watch in step with the plan. Runs only on fresh data from the Sheet, never on the phone cache.
+let gmAutoBusy=false,gmAutoAt=0;
+async function gmAuto(){
+  if(gmAutoBusy||!S.db||!S.db.fresh||!S.db.fresh()||!S.settings||!S.settings.raceTargets||!weekList().length)return;
+  if(Date.now()-gmAutoAt<15000)return;
+  const end=addD(today,GM_AUTO_DAYS);
+  const xs=allWorkouts().filter(x=>gmSendable(x)&&x.date<=end&&['none','changed'].includes(gmState(x).s));
+  // workouts that were removed from the plan (approved change, replaced, rearranged away) but are still on Garmin / in the queue
+  const now=new Date().toISOString();const rm=[];
+  Object.values(S.garmin).forEach(g=>{const id=g.workoutId;if(!id||findWo(id)||!['sent','queued','error'].includes(g.status))return;
+    const prev=g.garminWorkoutId?{garminWorkoutId:g.garminWorkoutId,garminWorkoutId2:g.garminWorkoutId2||null,scheduledId:g.scheduledId||null,date:g.date}:(g.prev||null);
+    const d=prev&&(g.date||'')>=today?{workoutId:id,date:g.date,status:'remove',requestedAt:now,prev}:{workoutId:id,date:g.date||'',status:'removed',removedAt:now};
+    S.garmin[id]=d;rm.push({op:'set',path:'garmin/'+id,data:d})});
+  if(!xs.length&&!rm.length)return;
+  gmAutoBusy=true;gmAutoAt=Date.now();
+  try{await S.db.batch([...gmOps(xs),...rm])}catch(e){console.error('auto-queue',e)}finally{gmAutoBusy=false}
 }
 // ================================================================== REPLAN: rearrange a week around busy days
 const HARDK=new Set(['intervals','intervals-10k','threshold','cruise','hills','fartlek','hmp','mp','long','css','brick','bike-intervals','speed','swim-test']);
@@ -987,12 +1014,15 @@ function roadmap(){
   const tw=L.findIndex(w=>w.weekStart===mondayOf(today));if(tw>=0){const x=20+tw*(BW+G)+((parse(today).getDay()+6)%7)/7*BW;g+=`<line x1="${x}" x2="${x}" y1="${top-6}" y2="${bandY+18}" stroke="#fff" stroke-width="1.5"/><text x="${x+3}" y="${bandY+50}" fill="#fff" font-size="10" font-family="Figtree">today</text>`}
   return `<div class="scroll" id="roadScroll" data-cur="${20+ci*(BW+G)}"><svg width="${W}" height="${bandY+56}" style="display:block">${g}</svg></div>`;
 }
+// block target chips: '@race' reads the live race target, so it never goes stale
+function blkTarget(t){if(t[0]!=='@')return t;const r=RT()[t.slice(1)];if(!r)return t.slice(1);const nm=String(r.name||t.slice(1)).split(' ')[0];
+  if(!toSec(r.goal))return nm+' '+r.goal;const g=String(r.goal).replace(/^(\d+:\d\d):00$/,'$1');return r.controlled?`${nm} ≈${g} controlled`:`${nm} sub-${g}`}
 function vSeason(){
   const L=weekList();const ci=curIdx();const {vd}=paces();
   const blocks=BLOCKS.map(b=>{const tot=dBetween(b.from,b.to)+1;const el=Math.max(0,Math.min(tot,dBetween(b.from,today)+1));const cur=today>=b.from&&today<=b.to;
     const wks=L.filter(w=>w.weekStart>=mondayOf(b.from)&&w.weekStart<=b.to).length;
     return `<div class="blk ${cur?'cur':''}" onclick="this.classList.toggle('open')"><div class="rail" style="background:${b.col}"></div><div><div class="row between"><b class="t1" style="font-family:"Bricolage Grotesque";font-size:15.5px">${esc(b.name)}</b><span class="small muted mono">${fmtD(b.from)} – ${fmtD(b.to)} · ${wks} wk</span></div>
-      <div class="bx"><div class="small" style="color:var(--sub);margin-top:3px">${esc(b.why)}</div><div class="row wrapf" style="gap:6px;margin-top:6px">${b.targets.map(t=>`<span class="chip" style="padding:2px 8px;font-size:11.5px">${esc(t)}</span>`).join('')}</div></div>
+      <div class="bx"><div class="small" style="color:var(--sub);margin-top:3px">${esc(b.why)}</div><div class="row wrapf" style="gap:6px;margin-top:6px">${b.targets.map(t=>`<span class="chip" style="padding:2px 8px;font-size:11.5px">${esc(blkTarget(t))}</span>`).join('')}</div></div>
       ${el>0?`<div class="prog"><i style="width:${el/tot*100}%"></i></div><div class="tiny muted" style="margin-top:3px">${el>=tot?'Completed':Math.round(el/tot*100)+'% through'}</div>`:''}</div></div>`}).join('');
   const races=RACE_ORDER.map(k=>raceCard(k,vd)).join('');
   const ms=(S.settings&&S.settings.milestones)||[];
@@ -1687,7 +1717,7 @@ function sheetDb(KEY){
   setInterval(()=>pull().catch(()=>{}),60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull().catch(()=>{})});
   const batch=async ops=>{ops.forEach(o=>{if(o.op==='set')store[o.path]=clone(o.data)});save();emit();for(let i=0;i<ops.length;i+=5)await post(ops.slice(i,i+5))};
-  return {doc:docRef,collection:collRef,refresh:pull,batch};
+  return {doc:docRef,collection:collRef,refresh:pull,batch,fresh:()=>loaded&&!fromCache};
 }
 // ================================================================== boot
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
