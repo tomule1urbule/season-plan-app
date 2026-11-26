@@ -446,7 +446,7 @@ const css=()=>+((S.settings||{}).css)||108;
 function paces(){
   const st=S.settings||{};const vd=+st.vdot||41.5;const g=st.goals||{};const rt=RT();
   const gp=(k,d,fb)=>{const s=toSec(rt[k]&&rt[k].goal);return s?mmss(s/d):(fb)};
-  return {vd,P:{E:mmss(secKm(vFor(vd*.70)))+'–'+mmss(secKm(vFor(vd*.62))),M:mmss(raceTime(vd,42195)/42.195),T:mmss(secKm(vFor(vd*.88))),I:mmss(secKm(vFor(vd*.975))),R:mmss(secKm(vFor(vd*1.05))),
+  return {vd,P:{E:mmss(secKm(vFor(vd*.70)))+'–'+mmss(secKm(vFor(vd*.62))),ST:mmss(secKm(vFor(vd*.76)))+'–'+mmss(secKm(vFor(vd*.72))),K5:mmss(raceTime(vd,5000)/5),M:mmss(raceTime(vd,42195)/42.195),T:mmss(secKm(vFor(vd*.88))),I:mmss(secKm(vFor(vd*.975))),R:mmss(secKm(vFor(vd*1.05))),
     '10KG':g['10KG']||gp('mazeikiai',10,'4:42'),HMG:g.HMG||gp('riga',21.0975,'4:44'),MPG:g.MPG||gp('tallinn',42.195,'5:18'),
     SE:mmss(css()+15),SS:mmss(css()+7),SC:mmss(css()),SF:mmss(css()-6),...goalSplits(rt)}};
 }
@@ -456,8 +456,8 @@ function goalSplits(rt){const o={};const t=k=>toSec(rt[k]&&rt[k].goal);const h=x
   if(b){o.GHM=h(b);o.SHM10=h(b*10/21.0975);o.SHM15=h(b*15/21.0975);o.SHMs=mmss(b/21.0975+5)}
   if(c){o.GM=h(c);o.SM21=h(c/2);o.SM30=h(c*30/42.195);o.SMs=mmss(c/42.195+6)}
   return o}
-const TOK=/\{(E|M|T|I|R|10KG|HMG|MPG|SE|SS|SC|SF|G10|S10_5|S10s|GHM|SHM10|SHM15|SHMs|GM|SM21|SM30|SMs)\}/g;
-const unitOf=k=>/^(G10|S10_5|GHM|SHM10|SHM15|GM|SM21|SM30)$/.test(k)?'':k[0]==='S'&&k.length===2?'/100 m':'/km';
+const TOK=/\{(E|ST|K5|M|T|I|R|10KG|HMG|MPG|SE|SS|SC|SF|G10|S10_5|S10s|GHM|SHM10|SHM15|SHMs|GM|SM21|SM30|SMs)\}/g;
+const unitOf=k=>/^(G10|S10_5|GHM|SHM10|SHM15|GM|SM21|SM30)$/.test(k)?'':/^S[ESCF]$/.test(k)?'/100 m':'/km';
 function fill(t){const {P}=paces();return esc(t).replace(TOK,(_,k)=>P[k]?`<b class="mono" style="color:var(--accent)">${P[k]}${unitOf(k)}</b>`:'—')}
 function plain(t){const {P}=paces();return String(t??'').replace(TOK,(_,k)=>P[k]+unitOf(k))}
 
@@ -667,7 +667,22 @@ async function gmSend(ids){
 }
 // Automatic: keep the watch in step with the plan. Runs only on fresh data from the Sheet, never on the phone cache.
 let gmAutoBusy=false,gmAutoAt=0;
+// Steps written before the Steady and 5K tokens existed showed the easy pace (or none) and went to Garmin without targets.
+const PACE_FIX=[[/steady — just quicker than \{E\},?\s*/g,'steady @ {ST} — '],[/steady — between \{E\} and \{M\}/g,'steady @ {ST} — between easy and marathon pace'],
+  [/@ 5K effort/g,'@ {K5} (5K effort)'],[/then 5K effort/g,'then {K5} (5K effort)']];
+const paceFixT=t=>PACE_FIX.reduce((a,[r,b])=>a.replace(r,b),String(t??''));
+let paceFixDone=false;
+async function paceFix(){
+  if(paceFixDone)return;paceFixDone=true;const ops=[];
+  for(const w of weekList()){let ch=false;
+    const ws=(w.workouts||[]).map(x=>{if(x.sport!=='run'&&x.sport!=='brick')return x;
+      const steps=(x.steps||[]).map(s=>[s[0],paceFixT(s[1])]),details=paceFixT(x.details);
+      if(JSON.stringify(steps)===JSON.stringify(x.steps||[])&&details===(x.details??''))return x;ch=true;return {...x,steps,details}});
+    if(ch){const {_id,...body}=w;body.workouts=ws;S.weeks[w.weekStart]={...w,workouts:ws};ops.push({op:'set',path:'weeks/'+w.weekStart,data:body})}}
+  if(ops.length){try{await S.db.batch(ops)}catch(e){paceFixDone=false;console.error('pace fix',e)}render()}
+}
 async function gmAuto(){
+  if(S.db&&S.db.fresh&&S.db.fresh()&&weekList().length)await paceFix();
   if(gmAutoBusy||!S.db||!S.db.fresh||!S.db.fresh()||!S.settings||!S.settings.raceTargets||!weekList().length)return;
   if(Date.now()-gmAutoAt<15000)return;
   const end=addD(today,GM_AUTO_DAYS);
@@ -875,7 +890,7 @@ async function mvUndo(btn){
 const INTC=['#7b86b8','#3fb8a8','#e8b73f','#ef7d3c','#e5508f'];
 const INTN=['Easy','Steady','Moderate','Hard','Very hard'];
 const icol=i=>INTC[Math.max(0,Math.min(4,Math.round(i)-1))];
-const TOKI={S10s:3.8,SHMs:3,SMs:2.6,E:1,SE:1,M:2.4,MPG:2.6,SS:2,HMG:3,T:3.4,SC:3.4,'10KG':3.8,I:4.3,SF:4.3,R:5};
+const TOKI={ST:1.8,K5:4.1,S10s:3.8,SHMs:3,SMs:2.6,E:1,SE:1,M:2.4,MPG:2.6,SS:2,HMG:3,T:3.4,SC:3.4,'10KG':3.8,I:4.3,SF:4.3,R:5};
 function paceMin(t){const {P}=paces();const s=String(P[t]||'').match(/(\d+):(\d\d)/);return s?(+s[1]+s[2]/60):null}
 function stepType(l){l=l.toLowerCase();
   if(/^(goal|at a glance|total|note it|fuel|before|t2)\b/.test(l))return 'info';
@@ -901,7 +916,7 @@ function parseStep(s,sport){
   if(/max hill|sprint/i.test(t))ki=5;else if(/zone [45]/i.test(t))ki=4.3;else if(/zone 2[–-]3/i.test(t))ki=2.6;else if(/zone 3|rpe 6|race effort|strong|fast|brisk/i.test(t))ki=3.4;else if(/zone 2/i.test(t)&&!/zone 1/i.test(t))ki=2;else if(/steady/i.test(t)&&!/easy/i.test(t))ki=2;
   let inten=Math.max(ti,ki);if(!inten)inten=type==='warm'||type==='cool'?1:type==='drill'?1.6:type==='info'?0:sport==='swim'?2.4:sport==='bike'?2:1.2;
   if((type==='warm'||type==='cool')&&inten>2)inten=1;
-  return {lbl,name:name.replace(/^./,c=>c.toUpperCase()),vol,rest,tok:tk[0]||'',zone,rir,txt,type,inten};
+  return {lbl,name:name.replace(/^./,c=>c.toUpperCase()),vol,rest,tok:tk[0]||'',toks:[...new Set(tk)].slice(0,3),zone,rir,txt,type,inten};
 }
 function stepCol(b,sp){return b.type==='warm'||b.type==='cool'?'#7b86b8':b.type==='drill'?'#9b7bf0':b.type==='ex'||b.type==='circuit'||b.type==='acc'?(SP[sp]||['','#888'])[1]:sp==='swim'&&b.inten<3?'#3987e5':icol(b.inten)}
 function stepSegs(b,sport){
@@ -935,7 +950,7 @@ function stepsView(x){
     if(b.type==='info'){rows.push(`<div class="ts t-info" onclick="this.classList.toggle('open')"><div class="tsh"><span class="tsi">${esc(b.lbl)}</span><span class="tsx">›</span></div><div class="tsd">${fill(b.txt)}</div></div>`);return}
     const col=stepCol(b,sp);
     const pills=[];
-    if(b.tok)pills.push(`<span class="pl pace">${fill('{'+b.tok+'}')}</span>`);else if(b.zone)pills.push(`<span class="pl pace">${esc(b.zone)}</span>`);
+    if(b.toks.length)b.toks.forEach(k=>pills.push(`<span class="pl pace">${fill('{'+k+'}')}</span>`));else if(b.zone)pills.push(`<span class="pl pace">${esc(b.zone)}</span>`);
     if(b.rir)pills.push(`<span class="pl">${esc(b.rir)}</span>`);
     if(b.rest)pills.push(`<span class="pl rest"><svg viewBox="0 0 12 12" width="9" height="9"><rect x="2" y="2" width="2.6" height="8" rx="1" fill="currentColor"/><rect x="7.4" y="2" width="2.6" height="8" rx="1" fill="currentColor"/></svg>${esc(b.rest)}</span>`);
     let chips='';
@@ -957,7 +972,7 @@ function openWo(id){
   const D=DI(x),DK_=DK(x);const why=D.role||x.why||K.why,feel=x.feel||K.feel,cues=x.cues||K.cues,tired=x.tired||K.tired,fuel=x.fuel||K.fuel;
   const {P}=paces();
   const toks=[...new Set(((x.steps||[]).map(s=>s[1]).join(' ')+(x.details||'')).match(TOK)||[])].map(t=>t.slice(1,-1));
-  const names={E:'Easy',M:'Marathon (fitness)',T:'Threshold',I:'Interval',R:'Repetition','10KG':'10K goal',HMG:'Half goal',MPG:'Marathon goal',SE:'Swim easy',SS:'Swim steady',SC:'Swim CSS',SF:'Swim fast',G10:'10K goal time',S10_5:'5 km split',S10s:'Start pace',GHM:'Half goal time',SHM10:'10 km split',SHM15:'15 km split',SHMs:'Start pace',GM:'Marathon goal time',SM21:'Halfway split',SM30:'30 km split',SMs:'Start pace'};
+  const names={E:'Easy',ST:'Steady',K5:'5K (fitness)',M:'Marathon (fitness)',T:'Threshold',I:'Interval',R:'Repetition','10KG':'10K goal',HMG:'Half goal',MPG:'Marathon goal',SE:'Swim easy',SS:'Swim steady',SC:'Swim CSS',SF:'Swim fast',G10:'10K goal time',S10_5:'5 km split',S10s:'Start pace',GHM:'Half goal time',SHM10:'10 km split',SHM15:'15 km split',SHMs:'Start pace',GM:'Marathon goal time',SM21:'Halfway split',SM30:'30 km split',SMs:'Start pace'};
   const sv=stepsView(x);const goal=sv.goal||'';
   const km=x.km?x.km+' km':(x.sport==='run'&&x.dur?'~'+Math.round(estKm(x))+' km':'');
   const acc=(t,body,open)=>body?`<details class="acc"${open?' open':''}><summary>${t}</summary><div class="ab">${body}</div></details>`:'';
@@ -1128,7 +1143,7 @@ async function toggleMs(id,on){
   try{await S.db.doc('settings/athlete').update({milestones:ms})}catch(e){alert0('Could not save: '+(e.message||e.code))}
 }
 function alert0(t){const l=document.getElementById('loadMsg');l.classList.remove('hide');l.textContent=t}
-function pacesCard(){const {vd,P}=paces();const k=[['Easy','E'],['Marathon (fitness)','M'],['Threshold','T'],['Interval','I'],['Repetition','R'],['10K goal','10KG'],['Half goal','HMG'],['Marathon goal','MPG']];
+function pacesCard(){const {vd,P}=paces();const k=[['Easy','E'],['Steady','ST'],['Marathon (fitness)','M'],['5K (fitness)','K5'],['Threshold','T'],['Interval','I'],['Repetition','R'],['10K goal','10KG'],['Half goal','HMG'],['Marathon goal','MPG']];
   const ks=[['Swim easy','SE'],['Swim steady','SS'],['Swim CSS','SC'],['Swim fast','SF']];
   const vh=((S.settings&&S.settings.vdotHistory)||[]).slice().reverse().map(h=>`<div class="tiny" style="padding:4px 0;border-top:1px solid var(--grid)"><span class="mono muted">${esc(h.at)}</span> VDOT <b class="mono">${h.vdot}</b> — ${esc(h.reason||'')}</div>`).join('');
   return `<div class="card"><div class="row between"><h2 style="font-size:17px">Training paces</h2><span class="chip">VDOT <b>${vd.toFixed(1)}</b></span></div>
