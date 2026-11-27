@@ -1993,7 +1993,7 @@ function sLastBox(x){if(!x||x.sport!=='strength')return '';const rows=(x.steps||
 // ================================================================== SESSION REVIEWS
 // Planned vs done + execution rating per session, written by the "Session reviews" task into reviews/<workoutId>.
 // rating = 0.4 × completion + 0.4 × intensity + 0.2 × structure (each 0–10). Missed sessions have no rating.
-const REVIEW_TASK_URL='https://claude.ai/scheduled-task/trig_01APMQ5ATDkq5dAPL4dKTZWM';
+const REVIEW_TASK_URL='https://claude.ai/scheduled-task/trig_01A1Mpp4SFcmd4XAr7evoakp';
 function rvNow(){const r={requestedAt:new Date().toISOString()};S.rvReq=r;window.open(REVIEW_TASK_URL,'_blank');try{S.db.doc('meta/review').set(r)}catch(e){}render()}
 function rvBtn(){const t=S.rvReq&&S.rvReq.requestedAt;const mins=t?(Date.now()-new Date(t))/6e4:99;
   if(mins<30)return `<div class="tiny muted" style="margin-top:8px">Review requested at ${new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — tap Run now on the task page; reviews appear here in ~5–15 min.</div>`;
