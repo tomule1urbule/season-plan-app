@@ -988,7 +988,7 @@ function openWo(id){
    <div class="wstat"><span class="muted">${fmtLong(x.date)}</span></div>
    <div class="wstat">${x.dur?`<span><b>${x.dur}</b>min</span>`:''}${km?`<span><b>${km.replace(' km','')}</b>km</span>`:''}${intLabel(x)}</div>
    ${profileSvg(x)}
-   ${goal?`<div class="goal1"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>${esc(goal.replace(/^Phase goal:\s*/i,''))}</div>`:''}
+   ${goal?`<div class="goal1"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>${fill(goal.replace(/^Phase goal:\s*/i,''))}</div>`:''}
    ${a?`<div class="donebox"><b style="color:var(--good)">✓</b><div>${m.st==='shifted'?'Done on '+fmtD(a.date):'Done'} · ${[a.km?(+a.km).toFixed(2)+' km':'',a.min?Math.round(a.min)+"'":'',a.pace?esc(a.pace):'',a.avgHr?a.avgHr+' bpm':''].filter(Boolean).join(' · ')}</div></div>`:m.st==='missed'?'<div class="donebox" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)"><b style="color:var(--crit)">✕</b><div>Not found in Garmin for this day</div></div>':''}
    ${sv.html}
    <div class="tiny muted" style="text-align:center;margin-top:8px">Tap a step for details</div>
