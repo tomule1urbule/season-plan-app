@@ -337,6 +337,7 @@ input[type=time],input[type=date],input[type=number]{background:var(--card2);col
 .chip.pr{background:#3a3110;color:#facc15;border-color:#6b5a12;padding:1px 8px;font-size:11.5px}
 .sbars{display:flex;align-items:flex-end;gap:6px;height:84px;margin:10px 0 6px}.sbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px}
 .sbar i{display:block;width:100%;max-width:26px;background:var(--strength);border-radius:4px 4px 0 0}.sbar span{font-size:10px;color:var(--muted)}
+.rvbox{margin-top:12px;padding:12px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}.rvbox.miss{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)}.rvbox ul{margin:4px 0 0 18px;font-size:13.5px}.rvp{display:grid;grid-template-columns:84px 1fr 30px;gap:8px;align-items:center;font-size:12.5px;margin:4px 0}.rvp .bar{margin:0}.rvp b{text-align:right}.rvt td:first-child{max-width:120px}.rvc{display:inline-block;margin-left:6px;padding:0 7px;border-radius:999px;font-size:11.5px;font-weight:800;color:var(--rc);border:1px solid var(--rc);line-height:17px}.rvbox .sub2{font-size:12px;font-weight:700;margin:10px 0 2px}.dotc{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px}
 </style>
 </head>
 <body>
@@ -1989,6 +1990,57 @@ function sLastFor(step){const n=sNorm(step);const tok=n.split(' ').filter(t=>t.l
 function sLastBox(x){if(!x||x.sport!=='strength')return '';const rows=(x.steps||[]).filter(s=>/^\d+\s*·/.test(s[0])).map(s=>{const l=sLastFor(s[0]);return l?`<div class="rdl"><span>${esc(s[0].replace(/^\d+\s*·\s*/,''))}</span><b class="mono">${esc(l)}</b></div>`:''}).join('');
   return rows?`<div class="card" style="margin-top:10px"><h3 class="rdh">Last time</h3>${rows}<div class="tiny muted" style="margin-top:4px">From your Garmin sets. Level reps at the top of the range → add 1–2 kg.</div></div>`:''}
 
+// ================================================================== SESSION REVIEWS
+// Planned vs done + execution rating per session, written by the "Session reviews" task into reviews/<workoutId>.
+// rating = 0.4 × completion + 0.4 × intensity + 0.2 × structure (each 0–10). Missed sessions have no rating.
+const REVIEW_TASK_URL='';
+const rvOf=id=>(S.reviews||{})[id];
+const rvCol=r=>r==null?'var(--muted)':r>=8.5?'var(--good)':r>=7?'var(--accent)':r>=5?'var(--warn)':'var(--crit)';
+const rvFmt=r=>r==null?'—':(+r).toFixed(1).replace(/\.0$/,'');
+function rvChip(x){const v=rvOf(x.id);if(!v||v.rating==null)return '';return `<span class="rvc" style="--rc:${rvCol(v.rating)}">${rvFmt(v.rating)}</span>`}
+function rvRing(r,sz=58){const R=24,C=2*Math.PI*R,f=r==null?0:Math.max(0,Math.min(10,r))/10;
+  return `<svg viewBox="0 0 60 60" width="${sz}" height="${sz}" aria-label="Execution ${rvFmt(r)} out of 10"><circle cx="30" cy="30" r="${R}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="6"/><circle cx="30" cy="30" r="${R}" fill="none" stroke="${rvCol(r)}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C*f} ${C}" transform="rotate(-90 30 30)"/><text x="30" y="35" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="16" fill="#fff">${rvFmt(r)}</text></svg>`}
+const RV_OK={good:['✓','var(--good)'],close:['≈','var(--warn)'],off:['✕','var(--crit)']};
+function rvCard(x){
+  const v=rvOf(x.id);const m=(typeof matchAll==='function'?matchAll():{})[x.id]||{};
+  if(!v){if(!['done','shifted'].includes(m.st))return '';
+    return `<div class="rvbox"><div class="row between" style="gap:10px"><div><b>Session review</b><div class="tiny muted">Planned vs done and an execution rating appear here within a few hours of your Garmin sync (checked 10:17, 14:17, 22:17).</div></div>${REVIEW_TASK_URL?`<button class="btn sm" onclick="window.open(REVIEW_TASK_URL,'_blank')">Review now</button>`:''}</div></div>`}
+  if(v.status==='missed')return `<div class="rvbox miss"><b style="color:var(--crit)">✕ ${esc(v.headline||'Missed')}</b>${v.summary?`<div class="small muted" style="margin-top:4px">${esc(v.summary)}</div>`:''}</div>`;
+  const P=v.parts||{};const part=(l,n)=>n==null?'':`<div class="rvp"><span>${l}</span><div class="bar"><i style="width:${Math.max(0,Math.min(10,n))*10}%;background:${rvCol(n)}"></i></div><b class="mono">${rvFmt(n)}</b></div>`;
+  const rows=(v.rows||[]).map(r=>{const k=RV_OK[r.ok]||['·','var(--muted)'];return `<tr><td>${esc(r.item||'')}</td><td class="mono muted">${esc(r.plan||'')}</td><td class="mono">${esc(r.done||'')}</td><td style="color:${k[1]};text-align:center;font-weight:700">${k[0]}</td></tr>`}).join('');
+  const ul=(t,l,c)=>l&&l.length?`<div class="sub2" style="color:${c}">${t}</div><ul>${l.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:'';
+  return `<div class="rvbox"><div class="row" style="gap:12px;align-items:center">${rvRing(v.rating)}<div style="flex:1;min-width:0"><div class="tiny muted">Execution${v.status==='swapped'?' · swapped session':''}${v.actDate&&v.actDate!==x.date?' · done '+fmtD(v.actDate):''}</div><b>${esc(v.headline||'')}</b></div></div>
+    ${v.summary?`<div class="small" style="margin-top:8px">${esc(v.summary)}</div>`:''}
+    <div style="margin-top:10px">${part('Completion',P.completion)}${part('Intensity',P.intensity)}${part('Structure',P.structure)}</div>
+    ${rows?`<table class="rdt rvt"><tr class="tiny muted"><td></td><td>Plan</td><td>Done</td><td></td></tr>${rows}</table>`:''}
+    ${ul('Went well',v.good,'var(--good)')}${ul('Next time',v.improve,'var(--warn)')}
+    <details class="tiny muted" style="margin-top:8px"><summary>How the rating works</summary>Rating = 40 % completion (volume vs plan) + 40 % intensity (paces, zones or reps-in-reserve matched the purpose) + 20 % structure (steps, reps and recoveries as written). 8.5+ green · 7+ good · 5–7 partly off plan · under 5 off plan.</details></div>`}
+function rvAgg(list){const r=list.filter(v=>v&&v.rating!=null);if(!r.length)return null;const avg=k=>{const a=r.map(v=>k?(v.parts||{})[k]:v.rating).filter(n=>n!=null);return a.length?a.reduce((s,n)=>s+ +n,0)/a.length:null};
+  return {n:r.length,avg:avg(),c:avg('completion'),i:avg('intensity'),s:avg('structure')}}
+function rvWeekCard(w){
+  const xs=(w.workouts||[]).filter(x=>x.date<=today);const vs=xs.map(x=>rvOf(x.id)).filter(Boolean);if(!vs.length)return '';
+  const a=rvAgg(vs);const miss=vs.filter(v=>v.status==='missed').length;
+  const per=SPORTS.concat('race').map(s=>{const g=rvAgg(xs.filter(x=>x.sport===s).map(x=>rvOf(x.id)));return g?`<span class="chip"><i class="dotc" style="background:${SP[s][1]}"></i>${SP[s][0]} <b style="color:${rvCol(g.avg)}">${rvFmt(g.avg)}</b></span>`:''}).join('');
+  return `<div class="rvbox rvweek" style="margin:0 0 12px"><div class="row" style="gap:12px;align-items:center">${rvRing(a?a.avg:null,52)}<div style="flex:1"><b>Execution this week</b><div class="tiny muted">${a?`${a.n} session${a.n>1?'s':''} rated`:'No rated sessions yet'}${miss?` · ${miss} missed`:''}</div></div></div>${per?`<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:10px">${per}</div>`:''}</div>`}
+function rvStats(){
+  const all=Object.values(S.reviews||{}).filter(v=>v&&v.date);if(!all.length)return `<h2 class="sec">Execution</h2><div class="card small muted">Session reviews and execution ratings appear here once your first sessions have been reviewed.</div>`;
+  const a=rvAgg(all);const miss=all.filter(v=>v.status==='missed').length;
+  const rows=SPORTS.concat('race').map(s=>{const g=rvAgg(all.filter(v=>v.sport===s));const m=all.filter(v=>v.sport===s&&v.status==='missed').length;if(!g&&!m)return '';return `<tr><td><i class="dotc" style="background:${SP[s][1]}"></i> ${SP[s][0]}</td><td class="mono">${g?g.n:0}</td><td class="mono" style="color:${rvCol(g&&g.avg)}">${g?rvFmt(g.avg):'—'}</td><td class="mono muted">${g?rvFmt(g.c):'—'}</td><td class="mono muted">${g?rvFmt(g.i):'—'}</td><td class="mono muted">${g?rvFmt(g.s):'—'}</td><td class="mono muted">${m}</td></tr>`}).join('');
+  const wk={};all.forEach(v=>{if(v.rating==null)return;const w=mondayOf(v.date);(wk[w]=wk[w]||[]).push(+v.rating)});
+  const pts=Object.keys(wk).sort().map(w=>({d:w,v:wk[w].reduce((s,n)=>s+n,0)/wk[w].length}));
+  const weak=a?['c','i','s'].map(k=>[k,a[k]]).filter(p=>p[1]!=null).sort((p,q)=>p[1]-q[1])[0]:null;
+  const WN={c:'Completion — sessions cut short or volume missing',i:'Intensity — paces, zones or reps-in-reserve off target',s:'Structure — steps or reps not done as written'};
+  const recent=all.slice().sort((p,q)=>p.date<q.date?1:-1).slice(0,6).map(v=>`<button class="msr" onclick="openWo('${esc(v.workoutId)}')"><span class="mi" style="color:${rvCol(v.rating)};border-color:${rvCol(v.rating)}">${v.rating==null?'✕':rvFmt(v.rating)}</span><span class="ml"><span class="mt">${esc(v.title||'')}</span><span class="tiny muted">${fmtD(v.date)} · ${esc(v.headline||'')}</span></span><span class="muted">›</span></button>`).join('');
+  return `<h2 class="sec">Execution</h2>
+   <div class="card"><div class="row" style="gap:12px;align-items:center">${rvRing(a?a.avg:null,64)}<div style="flex:1"><b>Average execution</b><div class="tiny muted">${a?a.n:0} sessions rated · ${miss} missed</div>${weak?`<div class="tiny" style="margin-top:4px;color:var(--warn)">Weakest part: ${WN[weak[0]]}</div>`:''}</div></div>
+    ${pts.length>1?`<div class="tiny muted" style="margin:10px 0 2px">Weekly average</div>${spark(pts,{col:'var(--accent)',band:[8.5,10],dots:true,w:300,h:50})}`:''}</div>
+   <div class="card"><h3 style="font-size:14.5px;margin-bottom:6px">By discipline</h3><table class="t"><tr><th>Sport</th><th>Rated</th><th>Avg</th><th>Compl.</th><th>Int.</th><th>Struct.</th><th>Missed</th></tr>${rows}</table></div>
+   <div class="card"><h3 style="font-size:14.5px;margin-bottom:4px">Latest reviews</h3>${recent}</div>`}
+{const _woCard=woCard;woCard=function(x){const h=_woCard(x);const c=rvChip(x);return c?h.replace('<span class="meta">',c+'<span class="meta">'):h}}
+{const _openWo2=openWo;openWo=function(id){_openWo2(id);const x=findWo(id);if(!x)return;const c=rvCard(x);if(!c)return;const si=document.getElementById('sheetIn');const db=si.querySelector('.donebox');
+  if(db)db.insertAdjacentHTML('afterend',c);else{const ws=si.querySelectorAll('.wstat');(ws[ws.length-1]||si.firstElementChild).insertAdjacentHTML('afterend',c)}}}
+{const _vWeek2=vWeek;vWeek=function(){const o=_vWeek2();const w=weekList()[S.weekIdx];const c=w?rvWeekCard(w):'';if(!c)return o;const i=o.indexOf('<div class="day ');return i>=0?o.slice(0,i)+c+o.slice(i):o+c}}
+{const _vStats2=vStats;vStats=function(){const o=_vStats2();const tag='<h2 class="sec">Strength</h2>';return o.includes(tag)?o.replace(tag,rvStats()+tag):o+rvStats()}}
 // ================================================================== hooks into existing screens
 {const _vWeek=vWeek;vWeek=function(){return rdBanner()+_vWeek()+`<button class="lnk" onclick="openLife()">🤒 Sick, injured or travelling?</button>`}}
 {const _vStats=vStats;vStats=function(){const o=_vStats();const tag='<h2 class="sec">Records & patterns</h2>';return o.includes(tag)?o.replace(tag,strengthSection()+tag):o+strengthSection()}}
@@ -2018,6 +2070,7 @@ render();
   coll('notes',a=>S.notes=a);
   coll('garmin',a=>{S.garmin={};a.forEach(g=>S.garmin[g.workoutId||g._id]=g)});
   coll('raceday',a=>{S.raceday={};a.forEach(x=>S.raceday[x._id]=x)});
+  coll('reviews',a=>{S.reviews={};a.forEach(x=>S.reviews[x.workoutId||x._id]=x)});
   db.doc('meta/refresh').onSnapshot(d=>{S.refresh=d.exists?d.data():null;if(S.tab==='garmin')render()},()=>{});
   db.doc('settings/athlete').onSnapshot(d=>{S.settings=d.exists?d.data():null;render()},err);
 })();
