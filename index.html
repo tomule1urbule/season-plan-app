@@ -1997,7 +1997,7 @@ const REVIEW_TASK_URL='https://claude.ai/scheduled-task/trig_01APMQ5ATDkq5dAPL4d
 function rvNow(){const r={requestedAt:new Date().toISOString()};S.rvReq=r;window.open(REVIEW_TASK_URL,'_blank');try{S.db.doc('meta/review').set(r)}catch(e){}render()}
 function rvBtn(){const t=S.rvReq&&S.rvReq.requestedAt;const mins=t?(Date.now()-new Date(t))/6e4:99;
   if(mins<30)return `<div class="tiny muted" style="margin-top:8px">Review requested at ${new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — tap Run now on the task page; reviews appear here in ~5–15 min.</div>`;
-  return `<button class="btn sm" style="margin-top:10px" onclick="rvNow()">↻ Review now</button>`}
+  return `<button class="btn p sm" style="margin-top:10px" onclick="rvNow()">↻ Review now</button>`}
 const rvOf=id=>(S.reviews||{})[id];
 const rvCol=r=>r==null?'var(--muted)':r>=8.5?'var(--good)':r>=7?'var(--accent)':r>=5?'var(--warn)':'var(--crit)';
 const rvFmt=r=>r==null?'—':(+r).toFixed(1).replace(/\.0$/,'');
